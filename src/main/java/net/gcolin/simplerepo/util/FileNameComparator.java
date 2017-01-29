@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.util;
 
 import java.io.File;
 import java.io.Serializable;

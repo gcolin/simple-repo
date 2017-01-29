@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.model;
 
 /**
  * VersionFile model in maven-metadata.xml.
@@ -38,38 +38,38 @@ public class VersionFile implements Comparable<VersionFile> {
     /**
      * @return the file
      */
-    public final String getFile() {
+    public String getFile() {
         return file;
     }
 
     /**
-     * @param newfile the file to set
+     * @param file the file to set
      */
-    public final void setFile(final String newfile) {
-        this.file = newfile;
+    public void setFile(String file) {
+        this.file = file;
     }
 
     /**
      * @return the version
      */
-    public final String getVersion() {
+    public String getVersion() {
         return version;
     }
 
     /**
-     * @param ver the version to set
+     * @param version the version to set
      */
-    public final void setVersion(final String ver) {
-        this.version = ver;
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     @Override
-    public final int compareTo(final VersionFile o) {
+    public int compareTo(VersionFile o) {
         return getVersion().compareTo(o.getVersion());
     }
 
     @Override
-    public final boolean equals(final Object obj) {
+    public boolean equals(Object obj) {
         return obj != null
                 && obj instanceof VersionFile
                 && (getVersion() == null
@@ -78,7 +78,7 @@ public class VersionFile implements Comparable<VersionFile> {
     }
 
     @Override
-    public final int hashCode() {
+    public int hashCode() {
         if (version == null) {
             return 0;
         } else {

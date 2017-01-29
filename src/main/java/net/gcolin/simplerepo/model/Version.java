@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,73 +55,73 @@ public class Version {
     /**
      * @return the classifier
      */
-    public final String getClassifier() {
+    public String getClassifier() {
         return classifier;
     }
 
     /**
-     * @param newclassifier the classifier to set
+     * @param classifier the classifier to set
      */
-    public final void setClassifier(final String newclassifier) {
-        this.classifier = newclassifier;
+    public void setClassifier(String classifier) {
+        this.classifier = classifier;
     }
 
     /**
      * @return the extension
      */
-    public final String getExtension() {
+    public String getExtension() {
         return extension;
     }
 
     /**
      * Set the extension.
      *
-     * @param newextension the extension to set
+     * @param extension the extension to set
      */
-    public final void setExtension(final String newextension) {
-        this.extension = newextension;
+    public void setExtension(String extension) {
+        this.extension = extension;
     }
 
     /**
      * @return the value
      */
-    public final String getValue() {
+    public String getValue() {
         return value;
     }
 
     /**
-     * @param val the value to set
+     * @param value the value to set
      */
-    public final void setValue(final String val) {
-        this.value = val;
+    public void setValue(String value) {
+        this.value = value;
     }
 
     /**
      * @return the updated
      */
-    public final String getUpdated() {
+    public String getUpdated() {
         return updated;
     }
 
     /**
-     * @param newupdated the updated to set
+     * @param updated the updated to set
      */
-    public final void setUpdated(final String newupdated) {
-        this.updated = newupdated;
+    public void setUpdated(String updated) {
+        this.updated = updated;
     }
 
     /**
      * @return the matches
      */
-    public final List<VersionFile> getMatches() {
+    public List<VersionFile> getMatches() {
         return matches;
     }
 
     /**
-     * @param newmatches the matches to set
+     * @param matches the matches to set
      */
-    public final void setMatches(final List<VersionFile> newmatches) {
-        this.matches = newmatches;
+    public void setMatches(List<VersionFile> matches) {
+        this.matches = matches;
     }
 
 }

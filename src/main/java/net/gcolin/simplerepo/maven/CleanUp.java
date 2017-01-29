@@ -16,8 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.maven;
 
+import net.gcolin.simplerepo.model.Version;
+import net.gcolin.simplerepo.model.Configuration;
+import net.gcolin.simplerepo.model.VersionFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -179,7 +182,7 @@ public final class CleanUp {
      * @return true if the object are equals
      */
     private static boolean equals(Object s1, Object s2) {
-        return s1 == s2 || (s1 != null && s1.equals(s2));
+        return s1 == s2 || s1 != null && s1.equals(s2);
     }
 
 }

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.util;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -49,6 +49,7 @@ public abstract class ListCallback {
      */
     public String formatDate(final long dateMilli) {
         Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(dateMilli);
         SimpleDateFormat dateFormat = new SimpleDateFormat(
                 "EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));

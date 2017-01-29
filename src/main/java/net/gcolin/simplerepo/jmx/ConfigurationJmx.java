@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.jmx;
 
 /**
  * Configuration JMX API.
@@ -46,5 +46,19 @@ public interface ConfigurationJmx {
      * @param maxSnapshots the max snapshots value
      */
     void setMaxSnapshots(int maxSnapshots);
+    
+    /**
+     * Get the not found cache.
+     *
+     * @return the not found cache
+     */
+    long getNotFoundCache();
+
+    /**
+     * Set the not found cache.
+     *
+     * @param notfoundcache the not found cache
+     */
+    void setNotFoundCache(long notfoundcache);
 
 }

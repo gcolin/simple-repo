@@ -16,9 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.model;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
@@ -41,7 +42,12 @@ public class Configuration {
     /**
      * Maximum number of snapshots stored.
      */
-    private int maxSnapshots;
+    private int maxSnapshots = 10;
+    
+    /**
+     * Time before the repository retry to get a not found file.
+     */
+    private long notFoundCache = TimeUnit.DAYS.toMicros(1L);
 
     /**
      * Get repositories.
@@ -77,6 +83,20 @@ public class Configuration {
      */
     public final void setMaxSnapshots(final int max) {
         this.maxSnapshots = max;
+    }
+
+    /**
+     * @return the notFoundCache
+     */
+    public long getNotFoundCache() {
+        return notFoundCache;
+    }
+
+    /**
+     * @param notFoundCache the notFoundCache to set
+     */
+    public void setNotFoundCache(long notFoundCache) {
+        this.notFoundCache = notFoundCache;
     }
 
 }

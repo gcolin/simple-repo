@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.jmx;
 
 /**
  * Repository JMX API.
@@ -40,6 +40,13 @@ public interface RepositoryJmx {
      * @param url the remote URL
      */
     void updateRemoteUrl(String url);
+    
+    /**
+     * Update the artifact max age.
+     *
+     * @param milliseconds the artifact max age in milliseconds
+     */
+    void updateArtifactMaxAge(long milliseconds);
 
     /**
      * Include a repository to this one.
@@ -81,5 +88,12 @@ public interface RepositoryJmx {
      * @return The remote URL of the repository
      */
     String getRemoteUrl();
+    
+    /**
+     * Get the artifact max age.
+     *
+     * @return The artifact max age
+     */
+    long getArtifactMaxAge();
 
 }

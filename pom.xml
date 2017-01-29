@@ -7,6 +7,8 @@
     <name>${project.artifactId}</name>
     <packaging>war</packaging>
     <inceptionYear>2017</inceptionYear>
+    <url>https://github.com/gcolin/${project.artifactId}</url>
+    <description>A tiny Maven proxy and repository</description>
     
     <licenses>
         <license>
@@ -29,6 +31,11 @@
         <developerConnection>scm:git:git@github.com:gcolin/${project.artifactId}.git</developerConnection>
         <url>http://github.com/gcolin/${project.artifactId}</url>
     </scm>
+    
+    <properties>
+        <jetty.version>9.4.0.v20161208</jetty.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
     
     <reporting>
         <plugins>
@@ -66,11 +73,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.17</version>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.rat</groupId>
                 <artifactId>apache-rat-plugin</artifactId>
                 <version>0.12</version>
@@ -82,6 +84,7 @@
                         <exclude>/src/main/webapp/**</exclude>
                         <exclude>README.md</exclude>
                         <exclude>/src/site/**</exclude>
+                        <exclude>**/*.properties</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -90,21 +93,48 @@
     
     <dependencies>
         <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.4</version>
-            <scope>provided</scope>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+            <version>${jetty.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.5</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 	
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.5.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.12.4</version>
+                <configuration>
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExclude>javax.servlet:servlet-api</classpathDependencyExclude>
+                    </classpathDependencyExcludes>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -117,59 +147,112 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.8</version>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>1.4</version>
                 <executions>
                     <execution>
-                        <!-- Copy the readme file to the site source files so that a page is generated from it. -->
-                        <id>copy-readme</id>
-                        <phase>pre-site</phase>
+                        <id>check-java-compat</id>
                         <goals>
-                            <goal>run</goal>
+                            <goal>enforce</goal>
                         </goals>
+                        <phase>process-classes</phase>
                         <configuration>
-                            <target>
-                                <copy file="README.md" toFile="${basedir}/src/site/markdown/index.md"/>
-                            </target>
+                            <rules>
+                                <checkSignatureRule implementation="org.codehaus.mojo.animal_sniffer.enforcer.CheckSignatureRule">
+                                    <signature>
+                                        <groupId>org.codehaus.mojo.signature</groupId>
+                                        <artifactId>java16</artifactId>
+                                        <version>1.0</version>
+                                    </signature>
+                                    <ignores>
+                                        <ignore>javax.servlet.*</ignore>
+                                    </ignores>
+                                </checkSignatureRule>
+                            </rules>
                         </configuration>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>animal-sniffer-enforcer-rule</artifactId>
+                        <version>1.14</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>1.4</version>
-                    <executions>
-                        <execution>
-                            <id>check-java-compat</id>
-                            <goals>
-                                <goal>enforce</goal>
-                            </goals>
-                            <phase>process-classes</phase>
-                            <configuration>
-                                <rules>
-                                    <checkSignatureRule implementation="org.codehaus.mojo.animal_sniffer.enforcer.CheckSignatureRule">
-                                        <signature>
-                                            <groupId>org.codehaus.mojo.signature</groupId>
-                                            <artifactId>java16</artifactId>
-                                            <version>1.0</version>
-                                        </signature>
-                                        <ignores>
-                                            <ignore>javax.servlet.*</ignore>
-                                        </ignores>
-                                    </checkSignatureRule>
-                                </rules>
-                            </configuration>
-                        </execution>
-                    </executions>
-                    <dependencies>
-                        <dependency>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>animal-sniffer-enforcer-rule</artifactId>
-                            <version>1.14</version>
-                        </dependency>
-                    </dependencies>
-                </plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>groovy-maven-plugin</artifactId>
+                <version>2.0</version>
+                <executions>
+                    <execution>
+                        <id>generate-docs</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <source><![CDATA[
+                                import org.commonmark.node.*;
+                                import org.commonmark.parser.Parser;
+                                import org.commonmark.renderer.html.HtmlRenderer;
+
+                                Parser parser = Parser.builder().build();
+                                Node document = parser.parse(new File('README.md').getText('utf-8'));
+                                HtmlRenderer renderer = HtmlRenderer.builder().build();
+                                
+                                def out = new File('target/'+ project.artifactId + '-' + project.version + '/docs.html')
+                                out.parentFile.mkdirs()
+                                def content = 
+                                ('<html><head>'
+                                +'<link rel="stylesheet" href="default.css">'
+                                +'<script src="highlight.pack.js"></script>'
+                                +'</head><body><a href="index.html">Home</a>'
+                                +renderer.render(document)
+                                +'</body></html>')
+
+                                out.setText(content, 'utf-8')
+                            ]]></source>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-index</id>
+                        <phase>pre-site</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <source><![CDATA[
+                                import org.commonmark.node.*;
+                                import org.commonmark.parser.Parser;
+                                import org.commonmark.renderer.html.HtmlRenderer;
+
+                                Parser parser = Parser.builder().build();
+                                Node document = parser.parse(new File('README.md').getText('utf-8'));
+                                HtmlRenderer renderer = HtmlRenderer.builder().build();
+                                
+                                def out = new File('src/site/xhtml/index.xhtml')
+                                out.parentFile.mkdirs()
+                                def content = 
+                                (
+                                '<div>'
+                                +renderer.render(document)
+                                +'</div>'
+                                )
+
+                                out.setText(content, 'utf-8')
+                            ]]></source>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.atlassian.commonmark</groupId>
+                        <artifactId>commonmark</artifactId>
+                        <version>0.8.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
 </project>

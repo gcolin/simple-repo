@@ -16,14 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.util;
 
+import net.gcolin.simplerepo.model.Repository;
+import net.gcolin.simplerepo.model.Configuration;
+import net.gcolin.simplerepo.jmx.RepositoryJmx;
+import net.gcolin.simplerepo.jmx.ConfigurationJmx;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,11 +45,6 @@ import javax.xml.bind.Marshaller;
  */
 public class ConfigurationManager implements ConfigurationJmx {
 
-    /**
-     * Starting of JMX name for a repository.
-     */
-    public static final String JMX_REPOSITORY
-            = "net.gcolin.server.maven:type=Repository,name=";
     /**
      * JAXBContext for the Configuration.
      */
@@ -70,10 +70,15 @@ public class ConfigurationManager implements ConfigurationJmx {
      */
     private volatile String currentRetrieve;
 
+    private String contextName;
+
     /**
      * Create a ConfigurationManager.
+     *
+     * @param contextName contextName
      */
-    public ConfigurationManager() {
+    public ConfigurationManager(String contextName) {
+        this.contextName = contextName;
         String rootPath = System.getProperty("simplerepo.root");
         if (rootPath == null) {
             File userDir = new File(System.getProperty("user.home"));
@@ -110,6 +115,36 @@ public class ConfigurationManager implements ConfigurationJmx {
     }
 
     /**
+     * Get the JMX name of the configuration.
+     *
+     * @return the JMX name of the configuration
+     */
+    public String getConfigurationJmxName() {
+        if (contextName == null) {
+            return "net.gcolin.simplerepo:type=Configuration";
+        } else {
+            return "net.gcolin.simplerepo:ctx=" + contextName
+                    + ",type=Configuration";
+        }
+    }
+
+    /**
+     * Get the JMX name of a repository.
+     *
+     * @param repository repository
+     * @return the JMX name of a repository
+     */
+    public String getRepositoryJmxName(Repository repository) {
+        if (contextName == null) {
+            return "net.gcolin.simplerepo:type=Repository,name="
+                    + repository.getName();
+        } else {
+            return "net.gcolin.simplerepo:ctx=" + contextName
+                    + ",type=Repository,name=" + repository.getName();
+        }
+    }
+
+    /**
      * Re index the repositories.
      */
     private void loadMap() {
@@ -128,6 +163,7 @@ public class ConfigurationManager implements ConfigurationJmx {
         config.setRepositories(new ArrayList<Repository>());
         Repository r = new Repository();
         r.setName("snapshots");
+        r.setArtifactMaxAge(TimeUnit.DAYS.toMillis(1L));
         config.getRepositories().add(r);
         r = new Repository();
         r.setName("releases");
@@ -156,7 +192,7 @@ public class ConfigurationManager implements ConfigurationJmx {
      *
      * @return the root folder
      */
-    public final File getRoot() {
+    public File getRoot() {
         return root;
     }
 
@@ -165,14 +201,14 @@ public class ConfigurationManager implements ConfigurationJmx {
      *
      * @return the configuration
      */
-    public final Configuration getConfiguration() {
+    public Configuration getConfiguration() {
         return config;
     }
 
     /**
      * Save the configuration.
      */
-    public final void save() {
+    public void save() {
         try {
             Marshaller m = ctx.createMarshaller();
             m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
@@ -188,12 +224,12 @@ public class ConfigurationManager implements ConfigurationJmx {
      * @param name repository name
      * @return null or a repository
      */
-    public final Repository getRepository(final String name) {
+    public Repository getRepository(final String name) {
         return repos.get(name);
     }
 
     @Override
-    public final void newRepository(final String name) {
+    public void newRepository(final String name) {
         if (repos.containsKey(name)) {
             throw new IllegalArgumentException("A repository with the name "
                     + name + " already exists.");
@@ -219,23 +255,39 @@ public class ConfigurationManager implements ConfigurationJmx {
      *
      * @param repository repository
      */
-    private void handle(final Repository repository) {
+    private void handle(Repository repository) {
         RepoHandle handle = new RepoHandle();
         handle.repo = repository;
-        JmxUtil.publish(JMX_REPOSITORY
-                + repository.getName(), handle, RepositoryJmx.class);
+        JmxUtil.publish(getRepositoryJmxName(repository),
+                handle, RepositoryJmx.class);
     }
 
     @Override
-    public final int getMaxSnapshots() {
+    public int getMaxSnapshots() {
         return config.getMaxSnapshots();
     }
 
     @Override
-    public final void setMaxSnapshots(final int max) {
+    public void setMaxSnapshots(final int max) {
         lock.lock();
         try {
             config.setMaxSnapshots(max);
+            save();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public long getNotFoundCache() {
+        return config.getNotFoundCache();
+    }
+
+    @Override
+    public void setNotFoundCache(long notfoundcache) {
+        lock.lock();
+        try {
+            config.setNotFoundCache(notfoundcache);
             save();
         } finally {
             lock.unlock();
@@ -253,7 +305,7 @@ public class ConfigurationManager implements ConfigurationJmx {
         private Repository repo;
 
         @Override
-        public final void rename(final String name) {
+        public void rename(String name) {
             if (name.equals(repo.getName())) {
                 throw new IllegalArgumentException(
                         "This is the actual name of the repository");
@@ -268,9 +320,9 @@ public class ConfigurationManager implements ConfigurationJmx {
             lock.lock();
             try {
                 String oldName = repo.getName();
-                JmxUtil.unpublish(JMX_REPOSITORY + oldName);
+                JmxUtil.unpublish(getRepositoryJmxName(repo));
                 repo.setName(name);
-                JmxUtil.publish(JMX_REPOSITORY + repo.getName(), this,
+                JmxUtil.publish(getRepositoryJmxName(repo), this,
                         RepositoryJmx.class);
                 for (Repository repository : config.getRepositories()) {
                     if (repository.getIncludes() != null
@@ -290,7 +342,7 @@ public class ConfigurationManager implements ConfigurationJmx {
         }
 
         @Override
-        public final void updateRemoteUrl(final String url) {
+        public void updateRemoteUrl(String url) {
             lock.lock();
             try {
                 if (url == null || url.trim().isEmpty()) {
@@ -306,7 +358,7 @@ public class ConfigurationManager implements ConfigurationJmx {
         }
 
         @Override
-        public final void addInclude(final String name) {
+        public void addInclude(String name) {
             if (name.equals(repo.getName())) {
                 throw new IllegalArgumentException(
                         "Cannot include into itself");
@@ -336,7 +388,7 @@ public class ConfigurationManager implements ConfigurationJmx {
         }
 
         @Override
-        public final void removeInclude(final String name) {
+        public void removeInclude(String name) {
             lock.lock();
             try {
                 List<String> list = new ArrayList<String>(repo.getIncludes());
@@ -349,8 +401,8 @@ public class ConfigurationManager implements ConfigurationJmx {
         }
 
         @Override
-        public final void remove() {
-            JmxUtil.unpublish(JMX_REPOSITORY + repo.getName());
+        public void remove() {
+            JmxUtil.unpublish(getRepositoryJmxName(repo));
             lock.lock();
             try {
                 List<Repository> newrepos = new ArrayList<Repository>();
@@ -376,23 +428,39 @@ public class ConfigurationManager implements ConfigurationJmx {
         }
 
         @Override
-        public final String[] getIncludes() {
+        public String[] getIncludes() {
             List<String> includes = repo.getIncludes();
             if (includes == null) {
-                return null;
+                return new String[0];
             } else {
                 return includes.toArray(new String[includes.size()]);
             }
         }
 
         @Override
-        public final String getName() {
+        public String getName() {
             return repo.getName();
         }
 
         @Override
-        public final String getRemoteUrl() {
+        public String getRemoteUrl() {
             return repo.getRemote();
+        }
+
+        @Override
+        public void updateArtifactMaxAge(long milliseconds) {
+            lock.lock();
+            try {
+                repo.setArtifactMaxAge(milliseconds);
+                save();
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        @Override
+        public long getArtifactMaxAge() {
+            return repo.getArtifactMaxAge();
         }
 
     }
@@ -400,15 +468,15 @@ public class ConfigurationManager implements ConfigurationJmx {
     /**
      * @return the currentRetrieve
      */
-    public final String getCurrentRetrieve() {
+    public String getCurrentRetrieve() {
         return currentRetrieve;
     }
 
     /**
-     * @param current the currentRetrieve to set
+     * @param currentRetrieve the currentRetrieve to set
      */
-    public final void setCurrentRetrieve(final String current) {
-        this.currentRetrieve = current;
+    public void setCurrentRetrieve(String currentRetrieve) {
+        this.currentRetrieve = currentRetrieve;
     }
 
 }

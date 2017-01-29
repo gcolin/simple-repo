@@ -16,15 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.util;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -48,12 +44,12 @@ public class DirectoryListCallback extends ListCallback {
      *
      * @param newchildren children
      */
-    public DirectoryListCallback(final List<File> newchildren) {
+    public DirectoryListCallback(List<File> newchildren) {
         this.children = newchildren;
     }
 
     @Override
-    public final void fillTable(final Writer writer) throws IOException {
+    public void fillTable(Writer writer) throws IOException {
         writer.write("<tr><td><a href=\"../\">Parent Directory</a>"
                 + "</td><td></td><td></td></tr>");
         Collections.sort(children, new FileNameComparator());

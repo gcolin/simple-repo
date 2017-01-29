@@ -16,8 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.maven;
 
+import net.gcolin.simplerepo.util.DirectoryListCallback;
+import net.gcolin.simplerepo.util.RepositoriesListCallback;
+import net.gcolin.simplerepo.util.ConfigurationManager;
+import net.gcolin.simplerepo.model.ContentResult;
+import net.gcolin.simplerepo.model.Version;
+import net.gcolin.simplerepo.model.Repository;
+import net.gcolin.simplerepo.jmx.ConfigurationJmx;
+import net.gcolin.simplerepo.util.JmxUtil;
+import net.gcolin.simplerepo.util.ListCallback;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -34,6 +43,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -56,7 +66,7 @@ import javax.xml.bind.JAXBException;
  * @author Gaël COLIN
  * @since 1.0
  */
-public class RepoServlet extends HttpServlet {
+public class MavenRepoServlet extends HttpServlet {
 
     /**
      * A unique serial version identifier.
@@ -68,7 +78,7 @@ public class RepoServlet extends HttpServlet {
      * Logger.
      */
     private static final transient Logger LOG
-            = Logger.getLogger(RepoServlet.class.getName());
+            = Logger.getLogger(MavenRepoServlet.class.getName());
     /**
      * The configuration manager.
      */
@@ -79,12 +89,23 @@ public class RepoServlet extends HttpServlet {
     private transient JAXBContext ctxVersion;
 
     /**
+     * For further use. Indexing for example
+     *
+     * @param file the file
+     * @param override the file was override
+     */
+    public void onRecieveFile(File file, boolean override) {
+
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
     public final void init() throws ServletException {
-        configManager = new ConfigurationManager();
-        JmxUtil.publish("net.gcolin.server.maven:type=Configuration",
+        configManager = new ConfigurationManager(
+                (String) getServletContext().getAttribute("contextName"));
+        JmxUtil.publish(configManager.getConfigurationJmxName(),
                 configManager, ConfigurationJmx.class);
         try {
             ctxVersion = JAXBContext.newInstance(Version.class);
@@ -98,11 +119,10 @@ public class RepoServlet extends HttpServlet {
      */
     @Override
     public final void destroy() {
-        JmxUtil.unpublish("net.gcolin.server.maven:type=Configuration");
+        JmxUtil.unpublish(configManager.getConfigurationJmxName());
         for (Repository repository
                 : configManager.getConfiguration().getRepositories()) {
-            JmxUtil.unpublish(ConfigurationManager.JMX_REPOSITORY
-                    + repository.getName());
+            JmxUtil.unpublish(configManager.getRepositoryJmxName(repository));
         }
     }
 
@@ -114,7 +134,11 @@ public class RepoServlet extends HttpServlet {
             final HttpServletResponse resp)
             throws ServletException, IOException {
         String path = req.getPathInfo();
-        if (path == null || path.isEmpty() || "/".equals(path)) {
+        if (path == null || path.isEmpty()) {
+            resp.sendRedirect(req.getServletPath().substring(1) + "/");
+            return;
+        }
+        if ("/".equals(path)) {
             list(req, resp, new RepositoriesListCallback(configManager));
             return;
         }
@@ -130,7 +154,7 @@ public class RepoServlet extends HttpServlet {
         ContentResult result = getType(req, resp, repo, path);
         if (result.isEmpty()) {
             result = getRemote(req, resp, repo, path, false,
-                    Collections.EMPTY_SET);
+                    Collections.EMPTY_SET, null);
             if (result.isEmpty()) {
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             } else {
@@ -168,7 +192,16 @@ public class RepoServlet extends HttpServlet {
                     LOG.log(Level.SEVERE, null, ex);
                 }
             }
+            Enumeration en = req.getHeaders("If-Modified-Since");
+            if (en.hasMoreElements()) {
+                long date = req.getDateHeader("If-Modified-Since");
+                if (result.getFile().lastModified() <= date) {
+                    resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+                    return;
+                }
+            }
             resp.setContentLength((int) result.getFile().length());
+            resp.setDateHeader("Last-Modified", result.getFile().lastModified());
             FileInputStream fin = null;
             try {
                 fin = new FileInputStream(result.getFile());
@@ -196,7 +229,8 @@ public class RepoServlet extends HttpServlet {
     private synchronized ContentResult getRemote(final HttpServletRequest req,
             final HttpServletResponse resp, final Repository repo,
             final String path, final boolean nocheck,
-            final Set<String> downloaded) throws IOException {
+            final Set<String> downloaded,
+            File previous) throws IOException {
         // maybe another paralle call has concluded
         ContentResult result;
         if (nocheck) {
@@ -216,7 +250,7 @@ public class RepoServlet extends HttpServlet {
                                 configManager.getRepository(r),
                                 path,
                                 false,
-                                downl);
+                                downl, null);
                 if (res.getFile() != null) {
                     return res;
                 } else if (res.getChildren() != null) {
@@ -229,17 +263,54 @@ public class RepoServlet extends HttpServlet {
                 }
             }
         } else if (repo.getRemote() != null) {
+            File file = new File(configManager.getRoot(),
+                    repo.getName() + File.separatorChar + path);
+            File parent = file.getParentFile();
+            if (parent.mkdirs()) {
+                LOG.log(Level.FINE, "create directory {0}", parent);
+            }
+
+            File notfound = new File(file.getParentFile(),
+                    file.getName() + ".notfound");
+            if (notfound.exists()) {
+                if ((System.currentTimeMillis() - notfound.lastModified())
+                        <= configManager.getNotFoundCache()) {
+                    return result;
+                } else {
+                    if (notfound.delete()) {
+                        LOG.log(Level.FINE, "delete file {0}", notfound);
+                    }
+                }
+            }
+
             String upath = repo.getRemote() + path;
             URL u = new URL(upath);
             URLConnection c = u.openConnection();
+            c.setUseCaches(false);
             try {
+                if (previous != null) {
+                    c.setIfModifiedSince(previous.lastModified());
+                }
                 c.setReadTimeout((int) TimeUnit.MINUTES.toMillis(10));
                 c.connect();
 
-                if (c instanceof HttpURLConnection
-                        && ((HttpURLConnection) c).getResponseCode()
-                        != HttpServletResponse.SC_OK) {
-                    return result;
+                if (c instanceof HttpURLConnection) {
+                    int statusCode = ((HttpURLConnection) c).getResponseCode();
+                    if (statusCode == HttpServletResponse.SC_NOT_MODIFIED) {
+                        if (previous != null && previous.setLastModified(
+                                System.currentTimeMillis())) {
+                            LOG.log(Level.FINE,
+                                    "update file last update {0}",
+                                    previous);
+                        }
+                        result.setFile(previous);
+                        return result;
+                    } else if (statusCode != HttpServletResponse.SC_OK) {
+                        if (notfound.createNewFile()) {
+                            LOG.log(Level.FINE, "create file {0}", notfound);
+                        }
+                        return result;
+                    }
                 }
                 String contentType = c.getContentType();
                 if (!path.endsWith(".html")
@@ -247,10 +318,8 @@ public class RepoServlet extends HttpServlet {
                         && contentType != null
                         && contentType.toLowerCase(Locale.ENGLISH)
                                 .startsWith("text/html")) {
-                    File dir = new File(configManager.getRoot(),
-                            repo.getName() + File.separatorChar + path);
-                    if (dir.mkdirs()) {
-                        LOG.log(Level.FINE, "create directory {0}", dir);
+                    if (file.mkdirs()) {
+                        LOG.log(Level.FINE, "create directory {0}", file);
                     }
                     result.setChildren(new ArrayList<File>());
                     ByteArrayOutputStream out = null;
@@ -275,18 +344,18 @@ public class RepoServlet extends HttpServlet {
                                 if (downloaded != Collections.EMPTY_SET) {
                                     downloaded.add(name);
                                 }
-                                File file;
+                                File subfile;
                                 if (name.endsWith("/")) {
-                                    file = new File(
-                                            dir,
+                                    subfile = new File(
+                                            file,
                                             name.substring(0,
                                                     name.length() - 1));
-                                    if (file.mkdirs()) {
+                                    if (subfile.mkdir()) {
                                         LOG.log(Level.FINE,
                                                 "create directory {0}",
-                                                file);
+                                                subfile);
                                     }
-                                    if (new File(file, ".todo")
+                                    if (new File(subfile, ".todo")
                                             .createNewFile()) {
                                         LOG.log(Level.FINER,
                                                 "create a todo file in {0}",
@@ -301,10 +370,10 @@ public class RepoServlet extends HttpServlet {
                                     }
                                     getRemote(req, resp, repo, suburl,
                                             false,
-                                            Collections.EMPTY_SET);
-                                    file = new File(dir, name);
+                                            Collections.EMPTY_SET, null);
+                                    subfile = new File(file, name);
                                 }
-                                result.getChildren().add(file);
+                                result.getChildren().add(subfile);
                             }
 
                         }
@@ -314,15 +383,8 @@ public class RepoServlet extends HttpServlet {
                 } else {
                     InputStream in = null;
                     FileOutputStream out = null;
-                    File file = new File(configManager.getRoot(),
-                            repo.getName() + File.separatorChar + path);
                     configManager.setCurrentRetrieve(file.getAbsolutePath());
                     try {
-                        File parent = file.getParentFile();
-                        if (parent.mkdirs()) {
-                            LOG.log(Level.FINE,
-                                    "create directory {0}", parent);
-                        }
                         result.setFile(file);
                         in = c.getInputStream();
                         out = new FileOutputStream(file);
@@ -331,6 +393,7 @@ public class RepoServlet extends HttpServlet {
                         close(in);
                         close(out);
                         configManager.setCurrentRetrieve(null);
+                        onRecieveFile(file, previous != null);
                     }
                 }
             } finally {
@@ -338,6 +401,8 @@ public class RepoServlet extends HttpServlet {
                     ((HttpURLConnection) c).disconnect();
                 }
             }
+        } else if (path.length() == 0) {
+            result.setChildren(Collections.EMPTY_LIST);
         }
         return result;
     }
@@ -459,10 +524,16 @@ public class RepoServlet extends HttpServlet {
                         }
                         result.setChildren(
                                 getRemote(req, resp, repo, path, true,
-                                        Collections.EMPTY_SET).getChildren());
+                                        Collections.EMPTY_SET,
+                                        null).getChildren());
                     }
-                } else {
+                } else if (repo.getArtifactMaxAge() == -1
+                        || (System.currentTimeMillis() - file.lastModified())
+                        <= repo.getArtifactMaxAge()) {
                     result.setFile(file);
+                } else {
+                    return getRemote(req, resp, repo, path, true,
+                            Collections.EMPTY_SET, file);
                 }
             }
         }

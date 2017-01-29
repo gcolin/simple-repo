@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.model;
 
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -43,23 +43,27 @@ public class Repository {
      * The included repositories.
      */
     private List<String> includes;
+    /**
+     * the max-age before checking.
+     */
+    private long artifactMaxAge = -1L;
 
     /**
      * Get name.
      *
      * @return name
      */
-    public final String getName() {
+    public String getName() {
         return name;
     }
 
     /**
      * Set name.
      *
-     * @param newname name
+     * @param name name
      */
-    public final void setName(final String newname) {
-        this.name = newname;
+    public void setName(String name) {
+        this.name = name;
     }
 
     /**
@@ -67,17 +71,17 @@ public class Repository {
      *
      * @return remote URL
      */
-    public final String getRemote() {
+    public String getRemote() {
         return remote;
     }
 
     /**
      * Set remote URL.
      *
-     * @param remoteurl remote URL
+     * @param remote remote URL
      */
-    public final void setRemote(final String remoteurl) {
-        this.remote = remoteurl;
+    public void setRemote(String remote) {
+        this.remote = remote;
     }
 
     /**
@@ -85,17 +89,31 @@ public class Repository {
      *
      * @return included repositories
      */
-    public final List<String> getIncludes() {
+    public List<String> getIncludes() {
         return includes;
     }
 
     /**
      * Set included repositories.
      *
-     * @param newincludes included repositories
+     * @param includes included repositories
      */
-    public final void setIncludes(final List<String> newincludes) {
-        this.includes = newincludes;
+    public void setIncludes(List<String> includes) {
+        this.includes = includes;
+    }
+
+    /**
+     * @return the artifactMaxAge
+     */
+    public long getArtifactMaxAge() {
+        return artifactMaxAge;
+    }
+
+    /**
+     * @param artifactMaxAge the artifactMaxAge to set
+     */
+    public void setArtifactMaxAge(long artifactMaxAge) {
+        this.artifactMaxAge = artifactMaxAge;
     }
 
 }

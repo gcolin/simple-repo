@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.util;
 
 import java.lang.management.ManagementFactory;
 import java.util.logging.Level;
@@ -68,13 +68,13 @@ public final class JmxUtil {
                 mbs.registerMBean(mbean, name);
             }
         } catch (InstanceAlreadyExistsException ex) {
-            report(ex);
+            report(jmxname, ex);
         } catch (MBeanRegistrationException ex) {
-            report(ex);
+            report(jmxname, ex);
         } catch (NotCompliantMBeanException ex) {
-            report(ex);
+            report(jmxname, ex);
         } catch (MalformedObjectNameException ex) {
-            report(ex);
+            report(jmxname, ex);
         }
     }
 
@@ -91,11 +91,11 @@ public final class JmxUtil {
                 mbs.unregisterMBean(name);
             }
         } catch (MBeanRegistrationException ex) {
-            report(ex);
+            report(jmxname, ex);
         } catch (MalformedObjectNameException ex) {
-            report(ex);
+            report(jmxname, ex);
         } catch (InstanceNotFoundException ex) {
-            report(ex);
+            report(jmxname, ex);
         }
     }
 
@@ -104,8 +104,8 @@ public final class JmxUtil {
      *
      * @param ex exception
      */
-    private static void report(final Exception ex) {
-        LOG.log(Level.SEVERE, "cannot register mbean", ex);
+    private static void report(String name, final Exception ex) {
+        LOG.log(Level.SEVERE, "cannot register mbean; " + name, ex);
     }
 
 }

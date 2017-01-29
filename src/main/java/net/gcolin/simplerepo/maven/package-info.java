@@ -18,6 +18,6 @@
  */
 
 /**
- * Contains Simple repo.
+ * Contains Maven repository implementation.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.maven;

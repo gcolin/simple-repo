@@ -16,15 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.server.maven;
+package net.gcolin.simplerepo.util;
 
+import net.gcolin.simplerepo.model.Repository;
+import net.gcolin.simplerepo.model.Configuration;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 
 /**
  * List all repositories.
@@ -44,16 +42,15 @@ public class RepositoriesListCallback extends ListCallback {
      *
      * @param configManager configurationManager
      */
-    public RepositoriesListCallback(final ConfigurationManager configManager) {
+    public RepositoriesListCallback(ConfigurationManager configManager) {
         this.configurationManager = configManager;
     }
 
     @Override
-    public final void fillTable(final Writer writer) throws IOException {
+    public void fillTable(Writer writer) throws IOException {
         final Configuration config = configurationManager.getConfiguration();
         for (Repository r : config.getRepositories()) {
             writer.write("<tr><td><a href=\"");
-            writer.write("repositories/");
             writer.write(r.getName());
             writer.write("/\">");
             writer.write(r.getName());
