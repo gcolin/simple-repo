@@ -38,20 +38,20 @@ public class NotFoundTest extends AbstractRepoTest {
         Server server2 = createServer(18081, "server2");
         try {
             addRepository("server1", "test", null);
-            addRepository("server2", "test", "http://localhost:18080/simple-repo/maven/test/");
+            addRepository("server2", "test", "http://localhost:18080/simple-repo/repository/test/");
 
-            Assert.assertEquals(404, getStatus("http://localhost:18081/simple-repo/maven/test/foo/bar.txt", 0));
+            Assert.assertEquals(404, getStatus("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", 0));
             Assert.assertTrue(new File("target/reposerver2/test/foo/bar.txt.notfound").exists());
             Assert.assertFalse(new File("target/reposerver1/test/foo").exists());
 
             File file = new File("target/reposerver1/test/foo/bar.txt");
             file.getParentFile().mkdirs();
             FileUtils.write(file, "hello", "utf-8");
-            Assert.assertEquals(404, getStatus("http://localhost:18081/simple-repo/maven/test/foo/bar.txt", 0));
+            Assert.assertEquals(404, getStatus("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", 0));
 
             Thread.sleep(500);
             setNotFoundCache("server2", 100);
-            Assert.assertEquals("hello", getContent("http://localhost:18081/simple-repo/maven/test/foo/bar.txt", 0));
+            Assert.assertEquals("hello", getContent("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", 0));
         } finally {
             server1.stop();
             server2.stop();

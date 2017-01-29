@@ -20,4 +20,4 @@
 /**
  * Contains Maven repository implementation.
  */
-package net.gcolin.simplerepo.maven;
+package net.gcolin.simplerepo.servlet;

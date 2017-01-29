@@ -39,13 +39,13 @@ public class DeployTest extends AbstractRepoTest {
 
             File file = new File("target/reposerver/test/foo/bar.txt");
 
-            Assert.assertEquals(401, sendContent("http://localhost:18080/simple-repo/maven/test/foo/bar.txt", "hello", null, null));
+            Assert.assertEquals(401, sendContent("http://localhost:18080/simple-repo/repository/test/foo/bar.txt", "hello", null, null));
             Assert.assertFalse(file.exists());
 
-            Assert.assertEquals(200, sendContent("http://localhost:18080/simple-repo/maven/test/foo/bar.txt", "hello", "user", "user"));
+            Assert.assertEquals(200, sendContent("http://localhost:18080/simple-repo/repository/test/foo/bar.txt", "hello", "user", "user"));
             Assert.assertTrue(file.exists());
 
-            Assert.assertEquals("hello", getContent("http://localhost:18080/simple-repo/maven/test/foo/bar.txt", 0));
+            Assert.assertEquals("hello", getContent("http://localhost:18080/simple-repo/repository/test/foo/bar.txt", 0));
         } finally {
             server.stop();
         }

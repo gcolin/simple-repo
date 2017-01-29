@@ -53,7 +53,7 @@ Open *MAVEN_HOME/conf/settings.xml*, add a mirror
          <mirror>
           <id>simplerepo</id>
           <mirrorOf>*</mirrorOf>
-          <url>http://localhost:8080/simple-repo/maven/public</url>
+          <url>http://localhost:8080/simple-repo/repository/public</url>
         </mirror>
         ...
       </mirrors>
@@ -65,7 +65,7 @@ Open *MAVEN_HOME/conf/settings.xml*, add a mirror
 
 You can upload manually with a command
 ```bash
-    mvn deploy:deploy-file -DgroupId=com.company -DartifactId=project -Dversion=1.0 -DgeneratePom=true -Dpackaging=jar -DrepositoryId=simple-repo-releases -Durl=http://localhost:8080/simple-repo/maven/thirdparty -Dfile=project-1.0.jar
+    mvn deploy:deploy-file -DgroupId=com.company -DartifactId=project -Dversion=1.0 -DgeneratePom=true -Dpackaging=jar -DrepositoryId=simple-repo-releases -Durl=http://localhost:8080/simple-repo/repository/thirdparty -Dfile=project-1.0.jar
 ```
 
 ## Deploy artifact
@@ -102,11 +102,11 @@ In your pom.xml, add
       <distributionManagement>
             <snapshotRepository>
                <id>simple-repo-snapshots</id>
-               <url>http://localhost:8080/simple-repo/maven/snapshots</url>
+               <url>http://localhost:8080/simple-repo/repository/snapshots</url>
             </snapshotRepository>
             <repository>
                 <id>simple-repo-releases</id>
-               <url>http://localhost:8080/simple-repo/maven/releases</url>
+               <url>http://localhost:8080/simple-repo/repository/releases</url>
             </repository>
         </distributionManagement>
       ...
@@ -126,4 +126,4 @@ Simple-repo acts as a stupid proxy and stores as a stupid secured ftp like serve
 
 A search system is not implemented because it can make the project heavier or slower. And the main goal of the project is to have a light, fast and simple repository.
 
-For making the search system easier, there is the method *onRecieveFile* in *net.gcolin.simplerepo.test.RepoCacheTest* that can be an entry point for indexing incoming files.
+For making the search system easier, there is the methods *onRecieveFile* and *onRemoveFile* in *net.gcolin.simplerepo.servlet.RepositoryServlet* that can be an entry point for indexing files.

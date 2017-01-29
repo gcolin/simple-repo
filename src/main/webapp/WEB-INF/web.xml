@@ -3,17 +3,17 @@
     <display-name>server-maven</display-name>
     <servlet>
         <servlet-name>repoServlet</servlet-name>
-        <servlet-class>net.gcolin.simplerepo.maven.MavenRepoServlet</servlet-class>
+        <servlet-class>net.gcolin.simplerepo.servlet.RepositoryServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
         <servlet-name>repoServlet</servlet-name>
-        <url-pattern>/maven/*</url-pattern>
+        <url-pattern>/repository/*</url-pattern>
     </servlet-mapping>
     <security-constraint>
         <web-resource-collection>
             <web-resource-name>Secure Content</web-resource-name>
-            <url-pattern>/maven/*</url-pattern>
+            <url-pattern>/repository/*</url-pattern>
             <http-method>PUT</http-method>
         </web-resource-collection>
         <auth-constraint>
@@ -25,7 +25,7 @@
         <realm-name>Secure Content</realm-name>
     </login-config>
     <security-role>
-        <description>The role required to access restricted content </description>
+        <description>The role required to access restricted content</description>
         <role-name>manager-upload</role-name>
     </security-role>
 </web-app>

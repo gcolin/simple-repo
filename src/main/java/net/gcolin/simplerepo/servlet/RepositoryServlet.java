@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.simplerepo.maven;
+package net.gcolin.simplerepo.servlet;
 
 import net.gcolin.simplerepo.util.DirectoryListCallback;
 import net.gcolin.simplerepo.util.RepositoriesListCallback;
@@ -66,7 +66,7 @@ import javax.xml.bind.JAXBException;
  * @author Gaël COLIN
  * @since 1.0
  */
-public class MavenRepoServlet extends HttpServlet {
+public class RepositoryServlet extends HttpServlet {
 
     /**
      * A unique serial version identifier.
@@ -78,7 +78,7 @@ public class MavenRepoServlet extends HttpServlet {
      * Logger.
      */
     private static final transient Logger LOG
-            = Logger.getLogger(MavenRepoServlet.class.getName());
+            = Logger.getLogger(RepositoryServlet.class.getName());
     /**
      * The configuration manager.
      */
@@ -95,6 +95,15 @@ public class MavenRepoServlet extends HttpServlet {
      * @param override the file was override
      */
     public void onRecieveFile(File file, boolean override) {
+
+    }
+    
+    /**
+     * For further use. Indexing for example
+     *
+     * @param file the file
+     */
+    public void onRemoveFile(File file) {
 
     }
 
@@ -591,11 +600,12 @@ public class MavenRepoServlet extends HttpServlet {
         } finally {
             close(fout);
         }
-        if (parent.getName().endsWith("-SNAPSHOT")
-                && file.getName().equals("maven-metadata.xml")) {
+        if (file.getName().equals("maven-metadata.xml")
+                && parent.getName().endsWith("-SNAPSHOT")) {
             CleanUp.cleanUpSnapshots(file, configManager.getConfiguration(),
-                    ctxVersion);
+                    ctxVersion, this);
         }
+        onRecieveFile(file, true);
     }
 
 }

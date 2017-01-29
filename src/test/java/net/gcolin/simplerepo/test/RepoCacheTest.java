@@ -38,30 +38,30 @@ public class RepoCacheTest extends AbstractRepoTest {
         Server server2 = createServer(18081, "server2");
         try {
             addRepository("server1", "test", null);
-            addRepository("server2", "test", "http://localhost:18080/simple-repo/maven/test/");
+            addRepository("server2", "test", "http://localhost:18080/simple-repo/repository/test/");
 
             File file = new File("target/reposerver1/test/foo/bar.txt");
             file.getParentFile().mkdirs();
             FileUtils.write(file, "hello", "utf-8");
-            Assert.assertEquals("hello", getContent("http://localhost:18081/simple-repo/maven/test/foo/bar.txt", 0));
+            Assert.assertEquals("hello", getContent("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", 0));
             Thread.sleep(1000);
             FileUtils.write(file, "world", "utf-8");
-            Assert.assertEquals("hello", getContent("http://localhost:18081/simple-repo/maven/test/foo/bar.txt", 0));
+            Assert.assertEquals("hello", getContent("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", 0));
 
             setArtifactMaxAge("server2", "test", 100);
             Thread.sleep(1000);
-            Assert.assertEquals("world", getContent("http://localhost:18081/simple-repo/maven/test/foo/bar.txt", 0));
+            Assert.assertEquals("world", getContent("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", 0));
             File file2 = new File("target/reposerver2/test/foo/bar.txt");
             long lastUpdate = file2.lastModified();
             Thread.sleep(1000);
-            Assert.assertEquals("world", getContent("http://localhost:18081/simple-repo/maven/test/foo/bar.txt", 0));
+            Assert.assertEquals("world", getContent("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", 0));
             Assert.assertTrue(lastUpdate < file2.lastModified());
 
             lastUpdate = file2.lastModified();
             FileUtils.write(file2, "world2", "utf-8");
             file2.setLastModified(lastUpdate);
             Thread.sleep(1000);
-            Assert.assertEquals("world2", getContent("http://localhost:18081/simple-repo/maven/test/foo/bar.txt", lastUpdate));
+            Assert.assertEquals("world2", getContent("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", lastUpdate));
         } finally {
             server1.stop();
             server2.stop();

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.gcolin.simplerepo.maven;
+package net.gcolin.simplerepo.servlet;
 
 import net.gcolin.simplerepo.model.Version;
 import net.gcolin.simplerepo.model.Configuration;
@@ -71,10 +71,12 @@ public final class CleanUp {
      * @param metadataxml maven-metadata.xml
      * @param configuration configuration
      * @param ctxVersion JMX
+     * @param servlet servlet
      * @throws ServletException if an error occurs.
      */
     public static void cleanUpSnapshots(final File metadataxml,
-            final Configuration configuration, final JAXBContext ctxVersion)
+            final Configuration configuration, 
+            final JAXBContext ctxVersion, RepositoryServlet servlet)
             throws ServletException {
         int max = configuration.getMaxSnapshots();
         if (max <= 0) {
@@ -145,16 +147,19 @@ public final class CleanUp {
                 for (int i = 0; i < v.getMatches().size() - max + 1; i++) {
                     String name = v.getMatches().get(i).getFile();
                     File md5File = new File(parent, name + ".md5");
+                    servlet.onRemoveFile(md5File);
                     if (md5File.exists() && !md5File.delete()) {
                         LOG.log(Level.WARNING, "cannot delete {0}",
                                 md5File.getAbsolutePath());
                     }
                     File sha1File = new File(parent, name + ".sha1");
+                    servlet.onRemoveFile(sha1File);
                     if (sha1File.exists() && !sha1File.delete()) {
                         LOG.log(Level.WARNING, "cannot delete {0}",
                                 sha1File.getAbsolutePath());
                     }
                     File file = new File(parent, name);
+                    servlet.onRemoveFile(file);
                     if (file.exists() && !file.delete()) {
                         LOG.log(Level.WARNING, "cannot delete {0}",
                                 file.getAbsolutePath());
