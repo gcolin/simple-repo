@@ -8,7 +8,7 @@ A tiny Maven proxy and repository.
 * Host Maven artefacts
 * Very fast
 * JRE 1.6+
-* Very small (minimal war size about 32 KB)
+* Very small
 * Small footprint
 * No database
 * Configuration interface via JMX (easy to secure)
@@ -36,6 +36,11 @@ For generating the maven site in *target/site* directory.
 
 The files are stored in **~/.simplerepo**. For storing files in another directory, 
 set the variable *simplerepo.root* (-Dsimplerepo.root=/path/to/repo).
+
+## Configure simple-repo
+
+The configuration is accessible through JMX. If you cannot access JMX via JConsole, 
+you can use [jmx-web-console](https://github.com/gcolin/jmx-web-console) for configuring JMX via a web interface.
 
 ## Configure Maven
 
@@ -112,3 +117,13 @@ And execute the maven deploy command
 ```bash
     maven deploy
 ```
+
+## Proxy another type of repository
+
+Simple-repo acts as a stupid proxy and stores as a stupid secured ftp like server. So, maybe other repository types can work too.
+
+## Package search
+
+A search system is not implemented because it can make the project heavier or slower. And the main goal of the project is to have a light, fast and simple repository.
+
+For making the search system easier, there is the method *onRecieveFile* in *net.gcolin.simplerepo.test.RepoCacheTest* that can be an entry point for indexing incoming files.
