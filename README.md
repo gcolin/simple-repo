@@ -12,7 +12,7 @@ A tiny Maven proxy and repository.
 * Small footprint
 * No database
 * Configuration interface via JMX (easy to secure)
-* Need only servlet api 2.4 (can run on old and new containers)
+* Need only servlet api 3.0 (works with Tomcat 7+ or Jetty 8+)
 
 ## How to build
 

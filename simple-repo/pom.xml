@@ -1,0 +1,81 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>net.gcolin.server.maven</groupId>
+        <version>1.0-SNAPSHOT</version>
+        <artifactId>simple-repo-parent</artifactId>
+    </parent>
+    <artifactId>simple-repo</artifactId>
+    <name>${project.artifactId}</name>
+    <packaging>war</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>net.gcolin.server.maven</groupId>
+            <artifactId>simple-repo-lib</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-webapp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.gmaven</groupId>
+                <artifactId>groovy-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generate-docs</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>execute</goal>
+                        </goals>
+                        <configuration>
+                            <source><![CDATA[
+                                import org.commonmark.node.*;
+                                import org.commonmark.parser.Parser;
+                                import org.commonmark.renderer.html.HtmlRenderer;
+                                
+                                Parser parser = Parser.builder().build();
+                                Node document = parser.parse(new File(project.parent.basedir ,'README.md').getText('utf-8'));
+                                HtmlRenderer renderer = HtmlRenderer.builder().build();
+                                
+                                def out = new File(project.build.directory, project.artifactId + '-' + project.version + '/docs.html')
+                                out.parentFile.mkdirs()
+                                def content = 
+                                ('<html><head>'
+                                +'<link rel="stylesheet" href="default.css">'
+                                +'<script src="highlight.pack.js"></script>'
+                                +'</head><body><a href="./">Home</a>'
+                                +renderer.render(document)
+                                +'</body></html>')
+
+                                out.setText(content, 'utf-8')
+                            ]]></source>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

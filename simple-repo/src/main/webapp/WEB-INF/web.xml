@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd" 
+         id="simple-repo" version="3.0" metadata-complete="true">
+    <display-name>simple-repo</display-name>
+    <listener>
+        <listener-class>net.gcolin.simplerepo.servlet.StartListener</listener-class>
+    </listener>
+    <servlet>
+        <servlet-name>indexServlet</servlet-name>
+        <servlet-class>net.gcolin.simplerepo.servlet.IndexServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>resourcesServlet</servlet-name>
+        <servlet-class>net.gcolin.simplerepo.servlet.ResourcesServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>repoServlet</servlet-name>
+        <servlet-class>net.gcolin.simplerepo.servlet.RepositoryServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>repoServlet</servlet-name>
+        <url-pattern>/repository/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>resourcesServlet</servlet-name>
+        <url-pattern>/resources/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>indexServlet</servlet-name>
+        <url-pattern></url-pattern>
+    </servlet-mapping>
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Upload content</web-resource-name>
+            <url-pattern>/repository/*</url-pattern>
+            <http-method>PUT</http-method>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>repo-upload</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Administrator view</web-resource-name>
+            <url-pattern>/config/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>repo-admin</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <login-config>
+        <auth-method>BASIC</auth-method>
+        <realm-name>Login</realm-name>
+    </login-config>
+    <security-role>
+        <description>The role for uploaded content</description>
+        <role-name>repo-upload</role-name>
+    </security-role>
+    <security-role>
+        <description>The role for configuring the repository</description>
+        <role-name>repo-admin</role-name>
+    </security-role>
+</web-app>
