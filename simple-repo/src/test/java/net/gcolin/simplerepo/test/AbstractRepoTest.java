@@ -20,6 +20,10 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.Arrays;
+
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -42,6 +46,9 @@ public abstract class AbstractRepoTest {
   protected Server createServer(int port, String displayName) throws Exception {
     FileUtils.deleteDirectory(new File("target/repo" + displayName));
     System.setProperty("simplerepo.root", "target/repo" + displayName);
+    File repoRoot = new File("target/repo" + displayName);
+    repoRoot.mkdirs();
+    Files.write(new File(repoRoot, "config.properties").toPath(), Arrays.asList("plugins="), StandardCharsets.UTF_8);
     Server server = new Server(port);
     FileUtils.copyDirectory(new File("src/main/webapp"), new File("target/server"));
     WebAppContext app = new WebAppContext("target/server", "/simple-repo");

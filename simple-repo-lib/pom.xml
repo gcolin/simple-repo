@@ -9,6 +9,7 @@
     <artifactId>simple-repo-lib</artifactId>
     <name>${project.artifactId}</name>
     <packaging>jar</packaging>
+    <description>The common classes of the project</description>
     
     <dependencies>
         <dependency>

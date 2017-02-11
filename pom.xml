@@ -11,9 +11,11 @@
 	<description>A tiny Maven proxy and repository</description>
 	<modules>
 		<module>simple-repo-lib</module>
+		<module>maven-lib</module>
 		<module>simple-repo</module>
 		<module>search-plugin</module>
 		<module>bootstrap-theme-plugin</module>
+		<module>extract-plugin</module>
 	</modules>
 	<licenses>
 		<license>
@@ -49,34 +51,31 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-project-info-reports-plugin</artifactId>
 				<version>2.9</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.3</version>
+				<configuration>
+					<dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jxr-plugin</artifactId>
 				<version>2.5</version>
+				<configuration>
+					<linkJavadoc>true</linkJavadoc>
+					<javadocDir>${project.reporting.outputDirectory}/apidocs</javadocDir>
+				</configuration>
+				<reportSets>
+					<reportSet>
+						<id>aggregate</id>
+						<reports>
+							<report>jxr</report>
+						</reports>
+					</reportSet>
+				</reportSets>
 			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>findbugs-maven-plugin</artifactId>
 				<version>3.0.3</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-report-plugin</artifactId>
-				<version>2.19.1</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-pmd-plugin</artifactId>
-				<version>3.6</version>
-				<configuration>
-					<sourceEncoding>utf-8</sourceEncoding>
-				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.rat</groupId>
@@ -91,18 +90,46 @@
 						<exclude>README.md</exclude>
 						<exclude>/src/site/**</exclude>
 						<exclude>**/*.properties</exclude>
+						<exclude>**/pom.xml</exclude>
+						<exclude>**/*.js</exclude>
+						<exclude>**/*.css</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
 		</plugins>
 	</reporting>
+
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>net.gcolin.server.maven</groupId>
 				<version>${project.version}</version>
+				<artifactId>extract-plugin</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>net.gcolin.server.maven</groupId>
+				<version>${project.version}</version>
 				<artifactId>simple-repo-lib</artifactId>
-				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>net.gcolin.server.maven</groupId>
+				<version>${project.version}</version>
+				<artifactId>maven-lib</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>net.gcolin.server.maven</groupId>
+				<version>${project.version}</version>
+				<artifactId>search-plugin</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>net.gcolin.server.maven</groupId>
+				<version>${project.version}</version>
+				<artifactId>bootstrap-theme-plugin</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>commons-beanutils</groupId>
+				<artifactId>commons-beanutils</artifactId>
+				<version>1.9.3</version>
 			</dependency>
 			<dependency>
 				<groupId>javax.servlet</groupId>
@@ -142,41 +169,6 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
 				<version>3.5.1</version>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.gmaven</groupId>
-				<artifactId>groovy-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>generate-index</id>
-						<phase>pre-site</phase>
-						<goals>
-							<goal>execute</goal>
-						</goals>
-						<configuration>
-							<source><![CDATA[
-                                import org.commonmark.node.*;
-                                import org.commonmark.parser.Parser;
-                                import org.commonmark.renderer.html.HtmlRenderer;
-
-                                Parser parser = Parser.builder().build();
-                                Node document = parser.parse(new File('README.md').getText('utf-8'));
-                                HtmlRenderer renderer = HtmlRenderer.builder().build();
-                                
-                                def out = new File('src/site/xhtml/index.xhtml')
-                                out.parentFile.mkdirs()
-                                def content = 
-                                (
-                                '<div>'
-                                +renderer.render(document)
-                                +'</div>'
-                                )
-
-                                out.setText(content, 'utf-8')
-                            ]]></source>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 		<pluginManagement>
@@ -252,4 +244,139 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+	
+		<profiles>
+		<profile>
+			<id>onroot</id>
+			<activation>
+				<file>
+					<exists>${basedir}/src/root</exists>
+				</file>
+			</activation>
+			<reporting>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>2.10.3</version>
+						<reportSets>
+							<reportSet>
+								<id>aggregate</id>
+								<reports>
+									<report>aggregate</report>
+								</reports>
+							</reportSet>
+						</reportSets>
+						<configuration>
+							<additionalparam>-Xdoclint:none</additionalparam>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-jxr-plugin</artifactId>
+						<version>2.5</version>
+						<configuration>
+							<linkJavadoc>true</linkJavadoc>
+							<javadocDir>${project.reporting.outputDirectory}/apidocs</javadocDir>
+						</configuration>
+						<reportSets>
+							<reportSet>
+								<id>aggregate</id>
+								<reports>
+									<report>aggregate</report>
+								</reports>
+							</reportSet>
+						</reportSets>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-report-plugin</artifactId>
+						<version>2.19.1</version>
+						<configuration>
+							<aggregate>true</aggregate>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-pmd-plugin</artifactId>
+						<version>3.6</version>
+						<configuration>
+							<aggregate>true</aggregate>
+						</configuration>
+					</plugin>
+				</plugins>
+			</reporting>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.gmaven</groupId>
+						<artifactId>groovy-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>generate-index</id>
+								<phase>pre-site</phase>
+								<goals>
+									<goal>execute</goal>
+								</goals>
+								<configuration>
+									<source><![CDATA[
+                                import org.commonmark.node.*;
+                                import org.commonmark.parser.Parser;
+                                import org.commonmark.renderer.html.HtmlRenderer;
+
+                                Parser parser = Parser.builder().build();
+                                Node document = parser.parse(new File('README.md').getText('utf-8'));
+                                HtmlRenderer renderer = HtmlRenderer.builder().build();
+                                
+                                def out = new File('src/site/xhtml/index.xhtml')
+                                out.parentFile.mkdirs()
+                                def content = 
+                                (
+                                '<div>'
+                                +renderer.render(document)
+                                +'</div>'
+                                )
+
+                                out.setText(content, 'utf-8')
+                            ]]></source>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>onmodule</id>
+			<activation>
+				<file>
+					<exists>${basedir}/src/main/java</exists>
+				</file>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.8</version>
+						<executions>
+							<execution>
+								<id>copy-subsite</id>
+								<phase>site</phase>
+								<configuration>
+									<target name="copy-subsite">
+										<copy todir="../target/site/${project.artifactId}">
+											<fileset dir="target/site" />
+										</copy>
+									</target>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

@@ -55,11 +55,10 @@ public class RepoCacheTest extends AbstractRepoTest {
             long lastUpdate = file2.lastModified();
             Thread.sleep(1000);
             Assert.assertEquals("world", getContent("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", 0));
-            Assert.assertTrue(lastUpdate < file2.lastModified());
+            Assert.assertEquals(lastUpdate, file2.lastModified());
 
             lastUpdate = file2.lastModified();
             FileUtils.write(file2, "world2", "utf-8");
-            file2.setLastModified(lastUpdate);
             Thread.sleep(1000);
             Assert.assertEquals("world2", getContent("http://localhost:18081/simple-repo/repository/test/foo/bar.txt", lastUpdate));
         } finally {

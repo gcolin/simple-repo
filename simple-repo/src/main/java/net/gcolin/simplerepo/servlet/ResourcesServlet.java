@@ -1,8 +1,9 @@
 /*
- * Copyright 2017 Admin.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -13,48 +14,31 @@
  */
 package net.gcolin.simplerepo.servlet;
 
-import net.gcolin.server.maven.PluginContainer;
-import net.gcolin.server.maven.PluginListener;
+import net.gcolin.simplerepo.util.Io;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
+ * A servlet for rendering plugin resources.
  *
- * @author Admin
+ * @author Gaël COLIN
+ * @since 1.0
  */
-public class ResourcesServlet extends AbstractIoServlet implements PluginListener {
+public class ResourcesServlet extends HttpServlet {
 
   private static final long serialVersionUID = 1L;
   private transient Map<String, Item> resources = new ConcurrentHashMap<String, Item>();
-  private transient Collection<ClassLoader> pluginsClassLoaders;
-
-  @Override
-  public void init() {
-    PluginContainer container =
-        (PluginContainer) getServletContext().getAttribute("pluginContainer");
-    container.add(this);
-    init0();
-  }
-
-  @SuppressWarnings("unchecked")
-  private void init0() {
-    pluginsClassLoaders =
-        (Collection<ClassLoader>) getServletContext().getAttribute("pluginsClassLoaders");
-  }
 
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -66,18 +50,9 @@ public class ResourcesServlet extends AbstractIoServlet implements PluginListene
     }
     Item item = resources.get(path);
     if (item == null) {
-      URL url = null;
       String rpath = "META-INF/resources" + path;
-      ClassLoader cl = null;
-      for (ClassLoader pluginsClassLoader : pluginsClassLoaders) {
-        url = pluginsClassLoader.getResource(rpath);
-        if (url != null) {
-          cl = pluginsClassLoader;
-          break;
-        }
-      }
+      URL url = this.getClass().getClassLoader().getResource(rpath);
       item = new Item();
-      item.classLoader = cl;
       item.url = url;
       if (url != null) {
         String file = url.getFile();
@@ -120,7 +95,7 @@ public class ResourcesServlet extends AbstractIoServlet implements PluginListene
         }
         item.length = (int) sum;
       } finally {
-        close(in);
+        Io.close(in);
       }
     }
     resp.setContentLength(item.length);
@@ -128,9 +103,9 @@ public class ResourcesServlet extends AbstractIoServlet implements PluginListene
     InputStream in = null;
     try {
       in = item.url.openStream();
-      copy(in, resp.getOutputStream());
+      Io.copy(in, resp.getOutputStream());
     } finally {
-      close(in);
+      Io.close(in);
     }
   }
 
@@ -139,25 +114,6 @@ public class ResourcesServlet extends AbstractIoServlet implements PluginListene
     private long lastUpdate = System.currentTimeMillis() / 1000 * 1000;
     private URL url;
     private int length = -1;
-    private ClassLoader classLoader;
   }
 
-  @Override
-  public synchronized void onPluginInstalled(ClassLoader classLoader) {
-    init0();
-  }
-
-  @Override
-  public synchronized void onPluginRemoved(ClassLoader classLoader) {
-    init0();
-    Set<String> toRemove = new HashSet<>();
-    for (Entry<String, Item> entry : resources.entrySet()) {
-      if (entry.getValue().classLoader == classLoader) {
-        toRemove.add(entry.getKey());
-      }
-    }
-    for (String key : toRemove) {
-      resources.remove(key);
-    }
-  }
 }
