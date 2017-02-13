@@ -265,9 +265,6 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
         if (c instanceof HttpURLConnection) {
           int statusCode = ((HttpURLConnection) c).getResponseCode();
           if (statusCode == HttpServletResponse.SC_NOT_MODIFIED) {
-            if (previous != null && previous.setLastModified(System.currentTimeMillis())) {
-              StartListener.LOG.log(Level.FINE, "update file last update {0}", previous);
-            }
             result.setFile(previous);
             return result;
           } else if (statusCode != HttpServletResponse.SC_OK) {
