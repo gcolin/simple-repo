@@ -13,21 +13,6 @@
  */
 package net.gcolin.simplerepo.extract;
 
-import net.gcolin.simplerepo.bootstrap.BootstrapListener;
-import net.gcolin.simplerepo.maven.MavenInfo;
-import net.gcolin.simplerepo.maven.MavenUtil;
-import net.gcolin.simplerepo.model.SearchResult;
-import net.gcolin.simplerepo.util.ConfigurationManager;
-import net.gcolin.simplerepo.util.Io;
-
-import org.apache.maven.model.Model;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Target;
-import org.apache.tools.ant.listener.CommonsLoggingListener;
-import org.apache.tools.ant.taskdefs.Sync;
-import org.apache.tools.ant.types.FileSet;
-import org.codehaus.plexus.util.IOUtil;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -46,12 +31,30 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+
+import org.apache.maven.model.Model;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Target;
+import org.apache.tools.ant.listener.CommonsLoggingListener;
+import org.apache.tools.ant.taskdefs.Sync;
+import org.apache.tools.ant.types.FileSet;
+import org.codehaus.plexus.util.IOUtil;
+
+import net.gcolin.simplerepo.bootstrap.BootstrapListener;
+import net.gcolin.simplerepo.maven.DisplayLink;
+import net.gcolin.simplerepo.maven.MavenInfo;
+import net.gcolin.simplerepo.maven.MavenUtil;
+import net.gcolin.simplerepo.model.SearchResult;
+import net.gcolin.simplerepo.util.ConfigurationManager;
+import net.gcolin.simplerepo.util.Io;
 
 /**
  * Generate website.
@@ -125,6 +128,9 @@ public class ExtractController extends MavenUtil {
       final boolean javadoc =
           Boolean.parseBoolean(configManager.getProperty("config.extractJavadoc"))
               || "on".equals(configManager.getProperty("config.extractJavadoc"));
+      
+      final Set<String> contents = new HashSet<>();
+      
       try (final Writer swriter =
           new OutputStreamWriter(new FileOutputStream(new File(dir, "data.js")))) {
         swriter.write("window.data = [");
@@ -136,8 +142,9 @@ public class ExtractController extends MavenUtil {
             if (file.toString().endsWith(".pom")) {
               Model model = readPom(file.toFile());
               SearchResult result = buildResult(repoName, file.toFile(), model);
-              File javadocDir = new File(dir, result.getGroupId()
-                  + "-" + result.getArtifactId() + "-" + result.getVersion());
+              File javadocDir = new File(dir,
+                  result.getGroupId() + "-" + result.getArtifactId() + "-" + result.getVersion());
+              contents.add(result.getGroupId() + "-" + result.getArtifactId() + "-" + result.getVersion());
               if (javadoc) {
                 String path = file.toFile().getAbsolutePath();
                 File javadocJar = new File(path.substring(0, path.length() - 4) + "-javadoc.jar");
@@ -157,6 +164,35 @@ public class ExtractController extends MavenUtil {
               swriter.write(result.getVersion());
               swriter.write("\"}");
               nb++;
+            }
+            return FileVisitResult.CONTINUE;
+          }
+
+        });
+        swriter.write("];");
+        
+        final DisplayLink displayLink = new DisplayLink() {
+          
+          @Override
+          public boolean isAvailable(String group, String artifact, String version) {
+            return contents.contains(group + "-" + artifact + "-" + version);
+          }
+
+          @Override
+          public String getExactLink(String group, String artifact, String version) {
+            return group + "-" + artifact + "-" + version + ".html";
+          }
+        };
+        
+        Files.walkFileTree(dir.toPath(), new SimpleFileVisitor<Path>() {
+          @Override
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+              throws IOException {
+            if (file.toString().endsWith(".pom")) {
+              Model model = readPom(file.toFile());
+              SearchResult result = buildResult(repoName, file.toFile(), model);
+              File javadocDir = new File(dir,
+                  result.getGroupId() + "-" + result.getArtifactId() + "-" + result.getVersion());
               try (Writer writer =
                   new OutputStreamWriter(new FileOutputStream(new File(dir, result.getGroupId()
                       + "-" + result.getArtifactId() + "-" + result.getVersion() + ".html")))) {
@@ -177,7 +213,8 @@ public class ExtractController extends MavenUtil {
                 writer.write("</span></div></form>");
                 File javadocIndex = new File(javadocDir, "index.html");
                 MavenInfo.writeHtml(writer, result, configManager, ExtractController.this,
-                    "public/", "index.html", javadocIndex.exists() ? javadocDir.getName() + "/index.html" : null);
+                    "public/", "index.html",
+                    javadocIndex.exists() ? javadocDir.getName() + "/index.html" : null, displayLink);
                 theme.onEndBody(req, writer);
                 writer.append("</body></html>");
               }
@@ -187,23 +224,28 @@ public class ExtractController extends MavenUtil {
           }
 
         });
-        swriter.write("];");
+        
       }
     }
   }
 
   private HttpServletRequest writeStartHtml(final ConfigurationManager configManager,
       final String repoName, Writer writer, BootstrapListener theme) throws IOException {
-    writer.append("<html><head><title>Simple repo</title>"
-        + "<meta charset=\"UTF-8\"><meta name=\"viewport\" "
-        + "content=\"width=device-width, initial-scale=1.0\">");
-
-    HttpServletRequest req = fakeRequest();
-
     String title = configManager.getProperty("config.extractTitle");
     if (title == null) {
       title = repoName;
     }
+
+    writer.append("<html><head><title>");
+
+    writer.append(title);
+
+    writer.append("</title>" + "<meta charset=\"UTF-8\"><meta name=\"viewport\" "
+        + "content=\"width=device-width, initial-scale=1.0\">");
+
+    HttpServletRequest req = fakeRequest();
+
+
     req.setAttribute("title", title);
     req.setAttribute("base", ".");
     req.setAttribute("theme", configManager.getProperty("config.extractTheme"));

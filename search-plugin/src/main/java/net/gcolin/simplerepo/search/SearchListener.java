@@ -15,6 +15,7 @@ package net.gcolin.simplerepo.search;
 
 import net.gcolin.simplerepo.IndexListener;
 import net.gcolin.simplerepo.RepositoryListener;
+import net.gcolin.simplerepo.maven.DisplayLink;
 import net.gcolin.simplerepo.maven.MavenInfo;
 import net.gcolin.simplerepo.model.Repository;
 import net.gcolin.simplerepo.model.ResultType;
@@ -280,7 +281,18 @@ public class SearchListener implements ServletContextListener, RepositoryListene
           writer.write(version);
           writer.write("</p>");
         } else {
-          MavenInfo.writeHtml(writer, result, configManager, controller, "repository/" + result.getRepoName() + "/", "", null);
+          MavenInfo.writeHtml(writer, result, configManager, controller, "repository/" + result.getRepoName() + "/", "", null, new DisplayLink() {
+            
+            @Override
+            public boolean isAvailable(String group, String artifact, String version) {
+              return true;
+            }
+
+            @Override
+            public String getExactLink(String group, String artifact, String version) {
+              return null;
+            }
+          });
         }
       } catch (SQLException ex) {
         throw new ServletException(ex);

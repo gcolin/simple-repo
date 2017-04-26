@@ -60,7 +60,8 @@ public class MavenInfo {
   private MavenInfo() {}
 
   public static void writeHtml(Writer writer, SearchResult result,
-      ConfigurationManager configManager, MavenUtil mavenUtil, String baseFilePath, String breadcrumbUrl, String javadoc) throws IOException {
+      ConfigurationManager configManager, MavenUtil mavenUtil, String baseFilePath,
+      String breadcrumbUrl, String javadoc, DisplayLink displayLink) throws IOException {
 
     Map<String, Model> cache = new HashMap<>();
 
@@ -123,7 +124,7 @@ public class MavenInfo {
       writer.write(model.getUrl());
       writer.write("</a></p>");
     }
-    if(javadoc != null) {
+    if (javadoc != null) {
       writer.write("<p class='text-info'>");
       writer.write(" <a target='_blank' href='");
       writer.write(javadoc);
@@ -276,32 +277,55 @@ public class MavenInfo {
           ds.setGroupId(Resolver.resolve(ds.getGroupId(), props, model));
           ds.setArtifactId(Resolver.resolve(ds.getArtifactId(), props, model));
           ds.setVersion(Resolver.resolve(ds.getVersion(), props, model));
-          String gId = URLEncoder.encode(ds.getGroupId(), "utf-8");
-          String aId = URLEncoder.encode(ds.getArtifactId(), "utf-8");
-          writer.write("<li>");
-          writer.write("<ul class=\"list-inline\" style=\"display: inline-block;\"><li><a href='");
-          writer.write("?groupId=");
-          writer.write(gId);
-          writer.write("'>");
-          writer.write(ds.getGroupId());
-          writer.write("</a></li><li><a href='");
-          writer.write("?groupId=");
-          writer.write(gId);
-          writer.write("&artifactId=");
-          writer.write(aId);
-          writer.write("'>");
-          writer.write(ds.getArtifactId());
-          writer.write("</a></li><li><a href='");
-          writer.write("?groupId=");
-          writer.write(gId);
-          writer.write("&artifactId=");
-          writer.write(aId);
-          writer.write("&version=");
-          writer.write(URLEncoder.encode(ds.getVersion(), "utf-8"));
-          writer.write("'>");
-          writer.write(ds.getVersion());
-          writer.write("</a></li></ul>");
-          writer.write("</li>");
+          boolean hasLink =
+              displayLink.isAvailable(ds.getGroupId(), ds.getArtifactId(), ds.getVersion());
+          if (hasLink) {
+            String gId = URLEncoder.encode(ds.getGroupId(), "utf-8");
+            String aId = URLEncoder.encode(ds.getArtifactId(), "utf-8");
+            writer.write("<li>");
+            writer
+                .write("<ul class=\"list-inline\" style=\"display: inline-block;\"><li><a href='");
+            writer.write(breadcrumbUrl);
+            writer.write("?groupId=");
+            writer.write(gId);
+            writer.write("'>");
+            writer.write(ds.getGroupId());
+            writer.write("</a></li><li><a href='");
+            writer.write(breadcrumbUrl);
+            writer.write("?groupId=");
+            writer.write(gId);
+            writer.write("&artifactId=");
+            writer.write(aId);
+            writer.write("'>");
+            writer.write(ds.getArtifactId());
+            String directlink = displayLink.getExactLink(ds.getGroupId(), ds.getArtifactId(), ds.getVersion());
+            writer.write("</a></li><li><a href='");
+            if(directlink != null) {
+              writer.write(directlink);
+            } else {
+              writer.write(breadcrumbUrl);
+              writer.write("?groupId=");
+              writer.write(gId);
+              writer.write("&artifactId=");
+              writer.write(aId);
+              writer.write("&version=");
+              writer.write(URLEncoder.encode(ds.getVersion(), "utf-8"));
+            }
+            writer.write("'>");
+            writer.write(ds.getVersion());
+            writer.write("</a></li></ul>");
+            writer.write("</li>");
+          } else {
+            writer.write("<li>");
+            writer.write("<ul class=\"list-inline\" style=\"display: inline-block;\"><li>");
+            writer.write(ds.getGroupId());
+            writer.write("</li><li>");
+            writer.write(ds.getArtifactId());
+            writer.write("</li><li>");
+            writer.write(ds.getVersion());
+            writer.write("</li></ul>");
+            writer.write("</li>");
+          }
         }
         writer.write("</ul>");
       }
