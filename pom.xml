@@ -5,18 +5,10 @@
 	<version>1.0-SNAPSHOT</version>
 	<artifactId>simple-repo-parent</artifactId>
 	<name>${project.artifactId}</name>
-	<packaging>pom</packaging>
 	<inceptionYear>2017</inceptionYear>
 	<url>https://github.com/gcolin/${project.artifactId}</url>
 	<description>A tiny Maven proxy and repository</description>
-	<modules>
-		<module>simple-repo-lib</module>
-		<module>maven-lib</module>
-		<module>simple-repo</module>
-		<module>search-plugin</module>
-		<module>bootstrap-theme-plugin</module>
-		<module>extract-plugin</module>
-	</modules>
+	<packaging>war</packaging>
 	<licenses>
 		<license>
 			<name>Apache License, Version 2.0</name>
@@ -96,73 +88,107 @@
 					</excludes>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.3</version>
+				<configuration>
+					<additionalparam>-Xdoclint:none</additionalparam>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jxr-plugin</artifactId>
+				<version>2.5</version>
+				<configuration>
+					<linkJavadoc>true</linkJavadoc>
+					<javadocDir>${project.reporting.outputDirectory}/apidocs</javadocDir>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-report-plugin</artifactId>
+				<version>2.19.1</version>
+				<configuration>
+					<aggregate>true</aggregate>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>3.6</version>
+				<configuration>
+					<aggregate>true</aggregate>
+				</configuration>
+			</plugin>
 		</plugins>
 	</reporting>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>extract-plugin</artifactId>
-			</dependency>
-			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>simple-repo-lib</artifactId>
-			</dependency>
-			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>maven-lib</artifactId>
-			</dependency>
-			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>search-plugin</artifactId>
-			</dependency>
-			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>bootstrap-theme-plugin</artifactId>
-			</dependency>
-			<dependency>
-				<groupId>commons-beanutils</groupId>
-				<artifactId>commons-beanutils</artifactId>
-				<version>1.9.3</version>
-			</dependency>
-			<dependency>
-				<groupId>javax.servlet</groupId>
-				<artifactId>javax.servlet-api</artifactId>
-				<version>3.0.1</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>4.11</version>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-webapp</artifactId>
-				<version>${jetty.version}</version>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>commons-io</groupId>
-				<artifactId>commons-io</artifactId>
-				<version>2.5</version>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>commons-codec</groupId>
-				<artifactId>commons-codec</artifactId>
-				<scope>test</scope>
-				<version>1.10</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+	<dependencies>
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.maven.indexer</groupId> -->
+		<!-- <artifactId>indexer-core</artifactId> -->
+		<!-- <version>5.1.1</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.eclipse.sisu</groupId> -->
+		<!-- <artifactId>org.eclipse.sisu.plexus</artifactId> -->
+		<!-- <version>0.2.1</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.sonatype.sisu</groupId> -->
+		<!-- <artifactId>sisu-guice</artifactId> -->
+		<!-- <version>3.2.2</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>org.apache.maven.wagon</groupId> -->
+		<!-- <artifactId>wagon-http-lightweight</artifactId> -->
+		<!-- <version>2.3</version> -->
+		<!-- </dependency> -->
+		<!-- <dependency> -->
+		<!-- <groupId>commons-beanutils</groupId> -->
+		<!-- <artifactId>commons-beanutils</artifactId> -->
+		<!-- <version>1.9.3</version> -->
+		<!-- </dependency> -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20170516</version>
+		</dependency>
+		<dependency>
+			<groupId>org.freemarker</groupId>
+			<artifactId>freemarker</artifactId>
+			<version>2.3.20</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.0.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.jetty</groupId>
+			<artifactId>jetty-webapp</artifactId>
+			<version>${jetty.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<scope>test</scope>
+			<version>1.10</version>
+		</dependency>
+	</dependencies>
 	<build>
 		<plugins>
 			<plugin>
@@ -170,213 +196,31 @@
 				<artifactId>maven-site-plugin</artifactId>
 				<version>3.5.1</version>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.12.4</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<encoding>UTF-8</encoding>
+				</configuration>
+			</plugin>
+
+			<!--plugin> <groupId>org.codehaus.gmaven</groupId> <artifactId>groovy-maven-plugin</artifactId> 
+				<executions> <execution> <id>generate-index</id> <phase>pre-site</phase> 
+				<goals> <goal>execute</goal> </goals> <configuration> <source><![CDATA[ import 
+				org.commonmark.node.*; import org.commonmark.parser.Parser; import org.commonmark.renderer.html.HtmlRenderer; 
+				Parser parser = Parser.builder().build(); Node document = parser.parse(new 
+				File('README.md').getText('utf-8')); HtmlRenderer renderer = HtmlRenderer.builder().build(); 
+				def out = new File('src/site/xhtml/index.xhtml') out.parentFile.mkdirs() 
+				def content = ( '<div>' +renderer.render(document) +'</div>' ) out.setText(content, 
+				'utf-8') ]]></source> </configuration> </execution> </executions> </plugin -->
 		</plugins>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-shade-plugin</artifactId>
-					<version>3.0.0</version>
-				</plugin>
-				<plugin>
-					<groupId>org.codehaus.gmaven</groupId>
-					<artifactId>groovy-maven-plugin</artifactId>
-					<version>2.0</version>
-					<dependencies>
-						<dependency>
-							<groupId>com.atlassian.commonmark</groupId>
-							<artifactId>commonmark</artifactId>
-							<version>0.8.0</version>
-						</dependency>
-					</dependencies>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.12.4</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.1</version>
-					<configuration>
-						<source>1.7</source>
-						<target>1.7</target>
-						<encoding>UTF-8</encoding>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-enforcer-plugin</artifactId>
-					<version>1.4</version>
-					<executions>
-						<execution>
-							<id>check-java-compat</id>
-							<goals>
-								<goal>enforce</goal>
-							</goals>
-							<phase>process-classes</phase>
-							<configuration>
-								<rules>
-									<checkSignatureRule
-										implementation="org.codehaus.mojo.animal_sniffer.enforcer.CheckSignatureRule">
-										<signature>
-											<groupId>org.codehaus.mojo.signature</groupId>
-											<artifactId>java17</artifactId>
-											<version>1.0</version>
-										</signature>
-										<ignores>
-											<ignore>javax.servlet.*</ignore>
-										</ignores>
-									</checkSignatureRule>
-								</rules>
-							</configuration>
-						</execution>
-					</executions>
-					<dependencies>
-						<dependency>
-							<groupId>org.codehaus.mojo</groupId>
-							<artifactId>animal-sniffer-enforcer-rule</artifactId>
-							<version>1.14</version>
-						</dependency>
-					</dependencies>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
-	
-		<profiles>
-		<profile>
-			<id>onroot</id>
-			<activation>
-				<file>
-					<exists>${basedir}/src/root</exists>
-				</file>
-			</activation>
-			<reporting>
-				<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>2.10.3</version>
-						<reportSets>
-							<reportSet>
-								<id>aggregate</id>
-								<reports>
-									<report>aggregate</report>
-								</reports>
-							</reportSet>
-						</reportSets>
-						<configuration>
-							<additionalparam>-Xdoclint:none</additionalparam>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-jxr-plugin</artifactId>
-						<version>2.5</version>
-						<configuration>
-							<linkJavadoc>true</linkJavadoc>
-							<javadocDir>${project.reporting.outputDirectory}/apidocs</javadocDir>
-						</configuration>
-						<reportSets>
-							<reportSet>
-								<id>aggregate</id>
-								<reports>
-									<report>aggregate</report>
-								</reports>
-							</reportSet>
-						</reportSets>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-surefire-report-plugin</artifactId>
-						<version>2.19.1</version>
-						<configuration>
-							<aggregate>true</aggregate>
-						</configuration>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-pmd-plugin</artifactId>
-						<version>3.6</version>
-						<configuration>
-							<aggregate>true</aggregate>
-						</configuration>
-					</plugin>
-				</plugins>
-			</reporting>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.codehaus.gmaven</groupId>
-						<artifactId>groovy-maven-plugin</artifactId>
-						<executions>
-							<execution>
-								<id>generate-index</id>
-								<phase>pre-site</phase>
-								<goals>
-									<goal>execute</goal>
-								</goals>
-								<configuration>
-									<source><![CDATA[
-                                import org.commonmark.node.*;
-                                import org.commonmark.parser.Parser;
-                                import org.commonmark.renderer.html.HtmlRenderer;
-
-                                Parser parser = Parser.builder().build();
-                                Node document = parser.parse(new File('README.md').getText('utf-8'));
-                                HtmlRenderer renderer = HtmlRenderer.builder().build();
-                                
-                                def out = new File('src/site/xhtml/index.xhtml')
-                                out.parentFile.mkdirs()
-                                def content = 
-                                (
-                                '<div>'
-                                +renderer.render(document)
-                                +'</div>'
-                                )
-
-                                out.setText(content, 'utf-8')
-                            ]]></source>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<profile>
-			<id>onmodule</id>
-			<activation>
-				<file>
-					<exists>${basedir}/src/main/java</exists>
-				</file>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<artifactId>maven-antrun-plugin</artifactId>
-						<version>1.8</version>
-						<executions>
-							<execution>
-								<id>copy-subsite</id>
-								<phase>site</phase>
-								<configuration>
-									<target name="copy-subsite">
-										<copy todir="../target/site/${project.artifactId}">
-											<fileset dir="target/site" />
-										</copy>
-									</target>
-								</configuration>
-								<goals>
-									<goal>run</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 </project>

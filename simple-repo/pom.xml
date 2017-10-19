@@ -45,10 +45,10 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<dependencies>
-				<dependency>
-					<groupId>net.gcolin.server.maven</groupId>
-					<artifactId>search-plugin</artifactId>
-				</dependency>
+<!-- 				<dependency> -->
+<!-- 					<groupId>net.gcolin.server.maven</groupId> -->
+<!-- 					<artifactId>search-plugin</artifactId> -->
+<!-- 				</dependency> -->
 				<dependency>
 					<groupId>net.gcolin.server.maven</groupId>
 					<artifactId>bootstrap-theme-plugin</artifactId>

@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -114,7 +115,7 @@ public class MavenInfo {
       writer.write("</div>");
     }
     writer.write("<p class='text-muted'><i>");
-    writer.write(new SimpleDateFormat("MMM dd, yyyy").format(pom.lastModified()));
+    writer.write(new SimpleDateFormat("MMM dd, yyyy", Locale.ENGLISH).format(pom.lastModified()));
     writer.write("</i></p>");
     if (model.getUrl() != null) {
       writer.write("<p>");

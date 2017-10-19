@@ -111,7 +111,13 @@ public class BootstrapListener implements ServletContextListener, IndexListener,
     writer.append("<span class=\"icon-bar\"></span>");
     writer.append("</button><a class=\"navbar-brand\" href=\"");
     writer.append(getBase(req));
-    writer.append("/\">Simple repo</a></div>");
+    writer.append("/\">");
+    if (req.getAttribute("title") != null) {
+      writer.append((String) req.getAttribute("title"));
+    } else {
+      writer.append("Simple repo");
+    }
+    writer.append("</a></div>");
     writer.append("<div id=\"navbar\" class=\"collapse navbar-collapse\">");
     writer.append("<ul class=\"nav navbar-nav\">");
     Map<String, String> menu = (Map<String, String>) req.getAttribute("menu");
