@@ -18,33 +18,32 @@
  */
 package net.gcolin.simplerepo.servlet;
 
-import net.gcolin.simplerepo.model.Version;
-import net.gcolin.simplerepo.model.Configuration;
-import net.gcolin.simplerepo.model.VersionFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import net.gcolin.simplerepo.model.Repository;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+
+import net.gcolin.simplerepo.model.Repository;
+import net.gcolin.simplerepo.model.Version;
+import net.gcolin.simplerepo.model.VersionFile;
+import net.gcolin.simplerepo.util.ConfigurationManager;
 
 /**
  * Clean up old snapshots.
@@ -54,143 +53,133 @@ import org.xml.sax.SAXException;
  */
 public final class CleanUp {
 
-    /**
-     * Logger.
-     */
-    private static final transient Logger LOG
-            = Logger.getLogger(CleanUp.class.getName());
+	/**
+	 * Utility class unused constructor.
+	 */
+	private CleanUp() {
+	}
 
-    /**
-     * Utility class unused constructor.
-     */
-    private CleanUp() {
-    }
+	/**
+	 * Clean up old snapshots.
+	 *
+	 * @param metadataxml          maven-metadata.xml
+	 * @param configurationManager configurationManager
+	 * @param repository           repository
+	 * @param ctxVersion           JMX
+	 * @param servlet              servlet
+	 * @throws ServletException if an error occurs.
+	 */
+	public static void cleanUpSnapshots(final File metadataxml, final ConfigurationManager configurationManager,
+			final Repository repository, RepositoryServlet servlet) throws ServletException {
+		int max = configurationManager.getMaxSnapshots();
+		if (max <= 0) {
+			return;
+		}
+		try {
+			Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(metadataxml);
+			XPath xPath = XPathFactory.newInstance().newXPath();
+			String artifactId = (String) xPath.evaluate("/metadata/artifactId/text()", doc.getDocumentElement(),
+					XPathConstants.STRING);
+			String versiona = (String) xPath.evaluate("/metadata/version/text()", doc.getDocumentElement(),
+					XPathConstants.STRING);
+			NodeList versionsNode = (NodeList) xPath.evaluate("/metadata/versioning/snapshotVersions/snapshotVersion",
+					doc.getDocumentElement(), XPathConstants.NODESET);
+			List<Version> versions = new ArrayList<Version>();
+			for (int i = 0; i < versionsNode.getLength(); i++) {
+				Node node = versionsNode.item(i);
+				Version v = new Version();
+				v.setClassifier(xPath.evaluate("classifier", node));
+				v.setExtension(xPath.evaluate("extension", node));
+				v.setValue(xPath.evaluate("value", node));
+				v.setUpdated(xPath.evaluate("updated", node));
 
-    /**
-     * Clean up old snapshots.
-     *
-     * @param metadataxml maven-metadata.xml
-     * @param configuration configuration
-     * @param repository repository
-     * @param ctxVersion JMX
-     * @param servlet servlet
-     * @throws ServletException if an error occurs.
-     */
-    public static void cleanUpSnapshots(final File metadataxml,
-            final Configuration configuration, 
-            final Repository repository,
-            final JAXBContext ctxVersion, RepositoryServlet servlet)
-            throws ServletException {
-        int max = configuration.getMaxSnapshots();
-        if (max <= 0) {
-            return;
-        }
-        try {
-            Document doc = DocumentBuilderFactory.newInstance()
-                    .newDocumentBuilder().parse(metadataxml);
-            XPath xPath = XPathFactory.newInstance().newXPath();
-            String artifactId = (String) xPath.evaluate(
-                    "/metadata/artifactId/text()", doc.getDocumentElement(),
-                    XPathConstants.STRING);
-            String versiona = (String) xPath.evaluate(
-                    "/metadata/version/text()", doc.getDocumentElement(),
-                    XPathConstants.STRING);
-            NodeList versionsNode = (NodeList) xPath.evaluate(
-                    "/metadata/versioning/snapshotVersions/snapshotVersion",
-                    doc.getDocumentElement(), XPathConstants.NODESET);
-            List<Version> versions = new ArrayList<Version>();
-            for (int i = 0; i < versionsNode.getLength(); i++) {
-                Version v = (Version) ctxVersion.createUnmarshaller()
-                        .unmarshal(versionsNode.item(i));
-                versions.add(v);
-            }
+				NodeList matchesNode = (NodeList) xPath.evaluate("matches", node, XPathConstants.NODESET);
+				for (int j = 0; j < matchesNode.getLength(); j++) {
+					VersionFile vf = new VersionFile();
+					vf.setFile(xPath.evaluate("file", node));
+					vf.setVersion(xPath.evaluate("version", node));
+					v.getMatches().add(vf);
+				}
 
-            versiona = versiona.substring(0,
-                    versiona.length() - "-SNAPSHOT".length());
-            String regexpr = artifactId + "-("
-                    + versiona.replaceAll("\\.", "\\\\.")
-                    + "-\\d{8}\\.\\d{6}-\\d)(-[^.]*){0,1}\\.(.*)";
-            Pattern p = Pattern.compile(regexpr);
-            File parent = metadataxml.getParentFile();
-            String[] children = parent.list();
-            if (children != null) {
-                for (String c : children) {
-                    Matcher m = p.matcher(c);
-                    if (m.matches()) {
-                        String version = m.group(1);
-                        String classifierF = m.group(2);
-                        if (classifierF != null) {
-                            classifierF = classifierF.substring(1);
-                        }
-                        String classifier = classifierF;
-                        String extension = m.group(3);
-                        Version selected = null;
-                        for (Version ver : versions) {
-                            if (equals(classifier, ver.getClassifier())
-                                    && equals(extension,
-                                            ver.getExtension())
-                                    && !equals(version,
-                                            ver.getValue())) {
-                                selected = ver;
-                            }
-                        }
+				versions.add(v);
+			}
 
-                        if (selected != null) {
-                            VersionFile vf = new VersionFile();
-                            vf.setFile(c);
-                            vf.setVersion(version);
-                            selected.getMatches().add(vf);
-                        }
+			versiona = versiona.substring(0, versiona.length() - "-SNAPSHOT".length());
+			String regexpr = artifactId + "-(" + versiona.replaceAll("\\.", "\\\\.")
+					+ "-\\d{8}\\.\\d{6}-\\d)(-[^.]*){0,1}\\.(.*)";
+			Pattern p = Pattern.compile(regexpr);
+			File parent = metadataxml.getParentFile();
+			String[] children = parent.list();
+			if (children != null) {
+				for (String c : children) {
+					Matcher m = p.matcher(c);
+					if (m.matches()) {
+						String version = m.group(1);
+						String classifierF = m.group(2);
+						if (classifierF != null) {
+							classifierF = classifierF.substring(1);
+						}
+						String classifier = classifierF;
+						String extension = m.group(3);
+						Version selected = null;
+						for (Version ver : versions) {
+							if (equals(classifier, ver.getClassifier()) && equals(extension, ver.getExtension())
+									&& !equals(version, ver.getValue())) {
+								selected = ver;
+							}
+						}
 
-                    }
-                }
-            }
-            for (Version v : versions) {
-                Collections.sort(v.getMatches());
-                for (int i = 0; i < v.getMatches().size() - max + 1; i++) {
-                    String name = v.getMatches().get(i).getFile();
-                    File md5File = new File(parent, name + ".md5");
-                    servlet.onRemoveFile(md5File, repository, false);
-                    if (md5File.exists() && !md5File.delete()) {
-                        LOG.log(Level.WARNING, "cannot delete {0}",
-                                md5File.getAbsolutePath());
-                    }
-                    File sha1File = new File(parent, name + ".sha1");
-                    servlet.onRemoveFile(sha1File, repository, false);
-                    if (sha1File.exists() && !sha1File.delete()) {
-                        LOG.log(Level.WARNING, "cannot delete {0}",
-                                sha1File.getAbsolutePath());
-                    }
-                    File file = new File(parent, name);
-                    servlet.onRemoveFile(file, repository, false);
-                    if (file.exists() && !file.delete()) {
-                        LOG.log(Level.WARNING, "cannot delete {0}",
-                                file.getAbsolutePath());
-                    }
-                }
-            }
-        } catch (IOException ex) {
-            throw new ServletException(ex);
-        } catch (ParserConfigurationException ex) {
-            throw new ServletException(ex);
-        } catch (XPathExpressionException ex) {
-            throw new ServletException(ex);
-        } catch (JAXBException ex) {
-            throw new ServletException(ex);
-        } catch (SAXException ex) {
-            throw new ServletException(ex);
-        }
-    }
-    
-    /**
-     * Check if 2 objects are equals.
-     * 
-     * @param s1 s1
-     * @param s2 s2
-     * @return true if the object are equals
-     */
-    private static boolean equals(Object s1, Object s2) {
-        return s1 == s2 || s1 != null && s1.equals(s2);
-    }
+						if (selected != null) {
+							VersionFile vf = new VersionFile();
+							vf.setFile(c);
+							vf.setVersion(version);
+							selected.getMatches().add(vf);
+						}
+
+					}
+				}
+			}
+			for (Version v : versions) {
+				Collections.sort(v.getMatches());
+				for (int i = 0; i < v.getMatches().size() - max + 1; i++) {
+					String name = v.getMatches().get(i).getFile();
+					File md5File = new File(parent, name + ".md5");
+					if (md5File.exists() && !md5File.delete()) {
+						configurationManager.getLogger().log(Level.WARNING, "cannot delete {0}",
+								md5File.getAbsolutePath());
+					}
+					File sha1File = new File(parent, name + ".sha1");
+					if (sha1File.exists() && !sha1File.delete()) {
+						configurationManager.getLogger().log(Level.WARNING, "cannot delete {0}",
+								sha1File.getAbsolutePath());
+					}
+					File file = new File(parent, name);
+					if (file.exists() && !file.delete()) {
+						configurationManager.getLogger().log(Level.WARNING, "cannot delete {0}",
+								file.getAbsolutePath());
+					}
+				}
+			}
+		} catch (IOException ex) {
+			throw new ServletException(ex);
+		} catch (ParserConfigurationException ex) {
+			throw new ServletException(ex);
+		} catch (XPathExpressionException ex) {
+			throw new ServletException(ex);
+		} catch (SAXException ex) {
+			throw new ServletException(ex);
+		}
+	}
+
+	/**
+	 * Check if 2 objects are equals.
+	 * 
+	 * @param s1 s1
+	 * @param s2 s2
+	 * @return true if the object are equals
+	 */
+	private static boolean equals(Object s1, Object s2) {
+		return s1 == s2 || s1 != null && s1.equals(s2);
+	}
 
 }

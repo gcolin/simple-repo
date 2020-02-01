@@ -44,7 +44,7 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
   protected void doContent(HttpServletRequest req, Writer writer)
       throws ServletException, IOException {
     writer.write(
-        "<div class='row'><div class='col-sm-3'><div class=\"panel panel-info\"><div class=\"panel-heading\"><span class=\"glyphicon glyphicon-hdd\"></span> Repositories</div><div class=\"panel-body\"><ul class='nav nav-pills nav-stacked'>");
+        "<div class='row'><div class='col c3'><h3>Repositories</h3><ul>");
     ConfigurationManager configManager =
         (ConfigurationManager) getServletContext().getAttribute("configManager");
     String reponame = (String) req.getAttribute("r");
@@ -64,33 +64,35 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
       writer.write(repo.getName());
       writer.write("</a></li>");
     }
-    writer.write("</ul></div></div></div><div class='col-sm-9'>");
+    writer.write("</ul>");
+    writer.write(
+            "<div><a class='btn btn-a btn-sm' href='?a=new'>New repository</a> <br/>");
+        writer.write(
+            "<a class='btn btn-sm' href='?a=global'>Global configuration</a></div><br/>");
+    writer.write("</div><div class='col c9'>");
     boolean isNew = reponame == null && "new".equals(req.getParameter("a"));
     if (isNew) {
       selected = new Repository();
     }
-    writer.write(
-        "<div><a class='btn btn-default' href='?a=new'><span class='glyphicon glyphicon-plus'></span> New repository</a> ");
-    writer.write(
-        "<a class='btn btn-info' href='?a=global'><span class='glyphicon glyphicon-cog'></span> Global configuration</a></div><br/>");
+    
 
     if ("global".equals(req.getParameter("a"))) {
       writer.write(
-          "<div class=\"panel panel-default\"><div class=\"panel-heading\"><span class=\"glyphicon glyphicon-cog\"></span> Global configuration <a class=\"pull-right\" href='?'>X</a></div><div class=\"panel-body\">");
+          "<div><h2>Global configuration</h2>");
       writeMessages(req, writer);
-      writer.write("<form method=\"POST\"><input type=\"hidden\" name=\"a\" value='global'/>");
-      writer.write("<div class=\"form-group\"><label for=\"maxsnapshots\">Max snapshots</label>");
+      writer.write("<form method=\"POST\"><input type=\"hidden\" name=\"a\" value='global'/><div class=\"row\">");
+      writer.write("<div class=\"col c3\"><label for=\"maxsnapshots\">Max snapshots</label></div>");
       writer.write(
-          "<input type=\"text\" name=\"maxsnapshots\" class=\"form-control\" id=\"maxsnapshots\" placeholder=\"The max number of snaphots by artifact\" value='");
+          "<div class=\"col c9\"><input type=\"text\" name=\"maxsnapshots\" id=\"maxsnapshots\" placeholder=\"The max number of snaphots by artifact\" value='");
       if (req.getParameter("maxsnapshots") != null) {
         writer.write(req.getParameter("maxsnapshots"));
       } else {
         writer.write(String.valueOf(configManager.getMaxSnapshots()));
       }
       writer.write("'/></div>");
-      writer.write("<div class=\"form-group\"><label for=\"maxsnapshots\">Not Found Cache</label>");
+      writer.write("<div class=\"col c3\"><label for=\"maxsnapshots\">Not Found Cache</label></div>");
       writer.write(
-          "<input type=\"text\" name=\"notfoundcache\" class=\"form-control\" id=\"notfoundcache\" placeholder=\"The time in millisenconds before retrying to get a not found file\" value='");
+          "<div class=\"col c9\"><input type=\"text\" name=\"notfoundcache\" id=\"notfoundcache\" placeholder=\"The time in millisenconds before retrying to get a not found file\" value='");
       if (req.getParameter("notfoundcache") != null) {
         writer.write(req.getParameter("notfoundcache"));
       } else {
@@ -98,16 +100,16 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
       }
       writer.write("'/></div>");
       writer.write(
-          "<button type=\"submit\" class=\"btn btn-primary\"><span class='glyphicon glyphicon-floppy-disk'></span> Save</button>");
+          "<button type=\"submit\" class=\"btn btn-b btn-sm\">Save</button>");
       writer.write("</form></div></div>");
     } else if (selected != null) {
       writer.write(
-          "<div class=\"panel panel-default\"><div class=\"panel-heading\"><span class=\"glyphicon glyphicon-hdd\"></span> ");
+          "<div><h2>");
       writer.write(isNew ? "New" : "Edit");
       writer.write(
-          " repository <a class=\"pull-right\" href='?'>X</a></div><div class=\"panel-body\">");
+          " repository </h2>");
       writeMessages(req, writer);
-      writer.write("<form method=\"POST\">");
+      writer.write("<form id='form' method=\"POST\"><div class=\"row\">");
       writer.write("<div class=\"form-group\">");
       if (!isNew) {
         writer.write("<input type=\"hidden\" name=\"r\" value='");
@@ -115,33 +117,32 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
           writer.write(selected.getName());
         }
         writer.write("'/>");
-        writer.write("<input type=\"hidden\" name=\"a\" value=''/>");
+        writer.write("<input type=\"hidden\" id='action' name=\"a\" value=''/>");
       } else {
         writer.write("<input type=\"hidden\" name=\"a\" value='new'/>");
       }
-      writer.write("<label for=\"name\">Name</label>");
+      writer.write("<div class=\"col c3\"><label for=\"name\">Name</label></div>");
       writer.write(
-          "<input type=\"text\" name=\"name\" class=\"form-control\" id=\"name\" placeholder=\"Name\" value='");
+          "<div class=\"col c9\"><input type=\"text\" name=\"name\" id=\"name\" placeholder=\"Name\" value='");
       if (req.getParameter("name") != null) {
         writer.write(req.getParameter("name"));
       } else if (selected.getName() != null) {
         writer.write(selected.getName());
       }
       writer.write("'/></div>");
-      writer.write("<div class=\"form-group\">");
-      writer.write("<label for=\"remote\">Remote URL</label>");
+      writer.write("<div class=\"col c3\"><label for=\"remote\">Remote URL</label></div>");
       writer.write(
-          "<input type=\"text\" name=\"remote\" class=\"form-control\" id=\"remote\" placeholder=\"URL\" value='");
+          "<div class=\"col c9\"><input type=\"text\" name=\"remote\" id=\"remote\" placeholder=\"URL\" value='");
       if (req.getParameter("remote") != null) {
         writer.write(req.getParameter("remote"));
       } else if (selected.getRemote() != null) {
         writer.write(selected.getRemote());
       }
       writer.write("'/></div>");
-      writer.write("<div class=\"form-group\">");
-      writer.write("<label for=\"included\">Includes</label>");
+      writer.write("<div class=\"col c3\">");
+      writer.write("<label for=\"included\">Includes</label></div>");
       writer
-          .write("<select id=\"included\" name=\"included\" multiple=\"\" class=\"form-control\">");
+          .write("<div class=\"col c9\"><select id=\"included\" name=\"included\" multiple=\"\" class=\"form-control\">");
       for (Repository repo : configManager.getRepos().values()) {
         if (repo != selected) {
           writer.write("<option value='");
@@ -157,12 +158,12 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
       }
       writer.write("</select></div>");
       writer.write(
-          "<button type=\"submit\" class=\"btn btn-primary\"><span class='glyphicon glyphicon-floppy-disk'></span> ");
+          "<button type=\"submit\" class=\"btn btn-b btn-sm\">");
       writer.write(isNew ? "Create" : "Update");
       writer.write("</button>");
       if (!isNew) {
         writer.write(
-            " <button type=\"button\" onclick=\"javascript:$(this).closest('form').find('input[name=a]').val('del').closest('form').submit()\" class=\"btn btn-warning\"><span class='glyphicon glyphicon-trash'></span> Remove</button>");
+            " <button type=\"button\" onclick=\"javascript:document.getElementById('action').value='del';document.getElementById('form').submit()\" class=\"btn btn-c btn-sm\">Remove</button>");
       }
       writer.write("</form></div></div>");
     }
@@ -170,16 +171,10 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
   }
 
   private void writeMessages(HttpServletRequest req, Writer writer) throws IOException {
-    if (req.getAttribute("error") != null) {
+    if (req.getAttribute("message") != null) {
       writer.write(
-          "<div class=\"alert alert-danger alert-dismissible\" role=\"alert\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button>");
-      writer.write((String) req.getAttribute("error"));
-      writer.write("</div>");
-    }
-    if (req.getAttribute("success") != null) {
-      writer.write(
-          "<div class=\"alert alert-success alert-dismissible\" role=\"alert\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-label=\"Close\"><span aria-hidden=\"true\">&times;</span></button>");
-      writer.write((String) req.getAttribute("success"));
+          "<div class=\"msg\">");
+      writer.write((String) req.getAttribute("message"));
       writer.write("</div>");
     }
   }
@@ -222,11 +217,11 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
           configManager.setNotFoundCache(maxsnapshots);
         }
       } catch (NumberFormatException ex) {
-        req.setAttribute("error", "Bad number format " + ex.getMessage());
+        req.setAttribute("message", "Bad number format " + ex.getMessage());
         doGet(req, resp);
         return;
       }
-      req.setAttribute("success", "Saved");
+      req.setAttribute("message", "Saved");
       doGet(req, resp);
       return;
     }
@@ -236,7 +231,7 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
     Repository repo = null;
 
     if (reponame == null && (name == null || name.isEmpty())) {
-      req.setAttribute("error", "The new repository must have a name");
+      req.setAttribute("message", "The new repository must have a name");
       doGet(req, resp);
       return;
     }
@@ -244,7 +239,7 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
     if (reponame != null) {
       repo = configManager.getRepository(reponame);
       if (repo == null) {
-        req.setAttribute("error", "The repository does not exists");
+        req.setAttribute("message", "The repository does not exists");
         doGet(req, resp);
         return;
       }
@@ -257,7 +252,7 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
     String remote = req.getParameter("remote");
 
     if (remote != null && !remote.isEmpty() && includes != null && includes.length > 0) {
-      req.setAttribute("error",
+      req.setAttribute("message",
           "The repository cannot have a remote URL and include other repositories");
       doGet(req, resp);
       return;
@@ -296,10 +291,10 @@ public class RepositoryConfigServlet extends AbstractDisplayServlet {
       for (String include : repoIncludes) {
         handle.removeInclude(include);
       }
-      req.setAttribute("success", "Saved");
+      req.setAttribute("message", "Saved");
       doGet(req, resp);
     } catch (IllegalArgumentException ex) {
-      req.setAttribute("error", ex.getMessage());
+      req.setAttribute("message", ex.getMessage());
       doGet(req, resp);
       return;
     }

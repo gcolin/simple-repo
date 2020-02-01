@@ -14,15 +14,6 @@
  */
 package net.gcolin.simplerepo.servlet;
 
-import net.gcolin.simplerepo.util.DirectoryListCallback;
-import net.gcolin.simplerepo.util.Io;
-import net.gcolin.simplerepo.util.RepositoriesListCallback;
-import net.gcolin.simplerepo.util.ConfigurationManager;
-import net.gcolin.simplerepo.RepositoryListener;
-import net.gcolin.simplerepo.model.ContentResult;
-import net.gcolin.simplerepo.model.Version;
-import net.gcolin.simplerepo.model.Repository;
-import net.gcolin.simplerepo.util.ListCallback;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -39,9 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.EventListener;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -53,8 +43,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
+
+import net.gcolin.simplerepo.model.ContentResult;
+import net.gcolin.simplerepo.model.Repository;
+import net.gcolin.simplerepo.util.ConfigurationManager;
+import net.gcolin.simplerepo.util.DirectoryListCallback;
+import net.gcolin.simplerepo.util.Io;
+import net.gcolin.simplerepo.util.ListCallback;
+import net.gcolin.simplerepo.util.RepositoriesListCallback;
 
 /**
  * Maven repository servlet.
@@ -62,7 +58,7 @@ import javax.xml.bind.JAXBException;
  * @author Gaël COLIN
  * @since 1.0
  */
-public class RepositoryServlet extends HttpServlet implements RepositoryListener {
+public class RepositoryServlet extends HttpServlet {
 
   /**
    * A unique serial version identifier.
@@ -74,36 +70,13 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
    * The configuration manager.
    */
   private transient ConfigurationManager configManager;
-  /**
-   * JAXBContext for versions.
-   */
-  private transient JAXBContext ctxVersion;
-  /**
-   * Listeners.
-   */
-  private transient RepositoryListener[] listeners;
 
   /**
    * {@inheritDoc}
    */
   @Override
-  @SuppressWarnings("unchecked")
   public final void init() throws ServletException {
     configManager = (ConfigurationManager) getServletContext().getAttribute("configManager");
-    List<EventListener> pluginListeners =
-        (List<EventListener>) getServletContext().getAttribute("pluginListeners");
-    List<RepositoryListener> rlisteners = new ArrayList<RepositoryListener>();
-    for (EventListener event : pluginListeners) {
-      if (event instanceof RepositoryListener) {
-        rlisteners.add((RepositoryListener) event);
-      }
-    }
-    listeners = rlisteners.toArray(new RepositoryListener[rlisteners.size()]);
-    try {
-      ctxVersion = JAXBContext.newInstance(Version.class);
-    } catch (JAXBException ex) {
-      StartListener.LOG.log(Level.FINE, null, ex);
-    }
   }
 
   /**
@@ -167,7 +140,7 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
         try {
           Thread.sleep(1000);
         } catch (InterruptedException ex) {
-          StartListener.LOG.log(Level.FINE, null, ex);
+          configManager.getLogger().log(Level.FINE, null, ex);
         }
       }
       Enumeration<String> en = req.getHeaders("If-Modified-Since");
@@ -236,7 +209,7 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
       File file = new File(configManager.getRoot(), repo.getName() + File.separatorChar + path);
       File parent = file.getParentFile();
       if (parent.mkdirs()) {
-        StartListener.LOG.log(Level.FINE, "create directory {0}", parent);
+        configManager.getLogger().log(Level.FINE, "create directory {0}", parent);
       }
 
       File notfound = new File(file.getParentFile(), file.getName() + ".notfound");
@@ -246,7 +219,7 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
           return result;
         } else {
           if (notfound.delete()) {
-            StartListener.LOG.log(Level.FINE, "delete file {0}", notfound);
+            configManager.getLogger().log(Level.FINE, "delete file {0}", notfound);
           }
         }
       }
@@ -269,7 +242,7 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
             return result;
           } else if (statusCode != HttpServletResponse.SC_OK) {
             if (notfound.createNewFile()) {
-              StartListener.LOG.log(Level.FINE, "create file {0}", notfound);
+              configManager.getLogger().log(Level.FINE, "create file {0}", notfound);
             }
             return result;
           }
@@ -278,7 +251,7 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
         if (!path.endsWith(".html") && !path.endsWith(".htm") && contentType != null
             && contentType.toLowerCase(Locale.ENGLISH).startsWith("text/html")) {
           if (file.mkdirs()) {
-            StartListener.LOG.log(Level.FINE, "create directory {0}", file);
+            configManager.getLogger().log(Level.FINE, "create directory {0}", file);
           }
           result.setChildren(new ArrayList<File>());
           ByteArrayOutputStream out = null;
@@ -305,10 +278,10 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
                 if (name.endsWith("/")) {
                   subfile = new File(file, name.substring(0, name.length() - 1));
                   if (subfile.mkdir()) {
-                    StartListener.LOG.log(Level.FINE, "create directory {0}", subfile);
+                    configManager.getLogger().log(Level.FINE, "create directory {0}", subfile);
                   }
                   if (new File(subfile, ".todo").createNewFile()) {
-                    StartListener.LOG.log(Level.FINER, "create a todo file in {0}", file);
+                    configManager.getLogger().log(Level.FINER, "create a todo file in {0}", file);
                   }
                 } else {
                   String suburl;
@@ -344,7 +317,6 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
               file.setLastModified(lastModified);
             }
             configManager.setCurrentRetrieve(null);
-            onRecieveFile(file, repo, true, previous != null);
           }
         }
       } finally {
@@ -433,7 +405,7 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
           if (result.getChildren().size() == 1
               && result.getChildren().get(0).getName().endsWith(".todo")) {
             if (result.getChildren().get(0).delete()) {
-              StartListener.LOG.log(Level.FINER, "remove todo file in {0}", file);
+              configManager.getLogger().log(Level.FINER, "remove todo file in {0}", file);
             }
             result.setChildren(
                 getRemote(req, resp, repo, path, true, Collections.EMPTY_SET, null).getChildren());
@@ -487,10 +459,9 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
       return;
     }
     File file = new File(configManager.getRoot(), path);
-    boolean override = file.exists();
     File parent = file.getParentFile();
     if (parent.mkdirs()) {
-      StartListener.LOG.log(Level.FINE, "create directory {0}", file);
+      configManager.getLogger().log(Level.FINE, "create directory {0}", file);
     }
 
     OutputStream fout = null;
@@ -501,23 +472,7 @@ public class RepositoryServlet extends HttpServlet implements RepositoryListener
       Io.close(fout);
     }
     if (file.getName().equals("maven-metadata.xml") && parent.getName().endsWith("-SNAPSHOT")) {
-      CleanUp.cleanUpSnapshots(file, configManager.getConfiguration(), repo, ctxVersion, this);
-    }
-    onRecieveFile(file, repo, false, override);
-  }
-
-  @Override
-  public void onRecieveFile(File file, Repository repository, boolean remote, boolean override) {
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].onRecieveFile(file, repository, remote, override);
+      CleanUp.cleanUpSnapshots(file, configManager, repo, this);
     }
   }
-
-  @Override
-  public void onRemoveFile(File file, Repository repository, boolean remote) {
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].onRemoveFile(file, repository, remote);
-    }
-  }
-
 }

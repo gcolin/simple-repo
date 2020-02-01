@@ -14,16 +14,9 @@
  */
 package net.gcolin.simplerepo.servlet;
 
-import net.gcolin.simplerepo.IndexListener;
-import net.gcolin.simplerepo.PluginContainer;
-import net.gcolin.simplerepo.PluginListener;
-
 import java.io.IOException;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.EventListener;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -38,125 +31,71 @@ import javax.servlet.http.HttpServletResponse;
  * @author Gaël COLIN
  * @since 1.0
  */
-public abstract class AbstractDisplayServlet extends HttpServlet implements PluginListener {
+public abstract class AbstractDisplayServlet extends HttpServlet {
 
-  private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-  protected IndexListener[] listeners;
+	protected abstract String getTitle();
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
+	protected abstract void doContent(HttpServletRequest req, Writer writer) throws ServletException, IOException;
 
-  public void init() {
-    init0();
-    PluginContainer container =
-        (PluginContainer) getServletContext().getAttribute("pluginContainer");
-    container.add(this);
-  }
+	@Override
+	protected final void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		resp.setCharacterEncoding("utf-8");
+		resp.setContentType("text/html");
+		Writer writer = resp.getWriter();
+		writer.append("<html><head><title>");
+		writer.append(getTitle());
+		writer.append("</title>" + "<meta charset=\"UTF-8\"><meta name=\"viewport\" "
+				+ "content=\"width=device-width, initial-scale=1.0\">");
+		writer.append("<link href=\"");
+		String contextName = req.getServletContext().getServletContextName();
+		if (!"/".equals(contextName)) {
+			writer.append("/");
+			writer.append(contextName);
+		}
+		writer.append("/entireframework.min.css\" rel=\"stylesheet\" type=\"text/css\">");
 
-  protected abstract String getTitle();
+		req.setAttribute("title", getTitle());
+		doMenu(req);
 
-  protected abstract void doContent(HttpServletRequest req, Writer writer)
-      throws ServletException, IOException;
+		writer.append("</head><body>");
 
-  @Override
-  protected final void doGet(HttpServletRequest req, HttpServletResponse resp)
-      throws ServletException, IOException {
-    resp.setCharacterEncoding("utf-8");
-    resp.setContentType("text/html");
-    Writer writer = resp.getWriter();
-    writer.append("<html><head><title>");
-    writer.append(getTitle());
-    writer.append("</title>"
-        + "<meta charset=\"UTF-8\"><meta name=\"viewport\" "
-        + "content=\"width=device-width, initial-scale=1.0\">");
+		writeMenu(req, writer);
 
-    req.setAttribute("title", getTitle());
-    doMenu(req);
+		writer.append("<div class=\"container\">");
+		
+		if (req.getAttribute("notitle") == null) {
+			writer.append("<h1>");
+			writer.append(getTitle());
+			writer.append("</h1>");
+		}
+		doContent(req, writer);
+		writer.append("</div>");
+	}
 
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].onHead(req, writer);
-    }
+	protected void doMenu(HttpServletRequest req) {
+		String base = req.getContextPath();
+		if (base.equals("/")) {
+			base = "";
+		}
+		Map<String, String> menu = new LinkedHashMap<>();
+		menu.put(base + "/repository/", "All repositories");
+		menu.put(base + "/config/repository", "Repositories");
+		req.setAttribute("menu", menu);
+	}
 
-    writer.append("</head><body>");
-
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].onStartBody(req, writer);
-    }
-
-    if (req.getAttribute("notitle") == null) {
-      writer.append("<h1>");
-      writer.append(getTitle());
-      writer.append("</h1>");
-    }
-
-    doContent(req, writer);
-
-    writeMenu(req, writer);
-
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].onEndBody(req, writer);
-    }
-
-    writer.append("<footer class=\"footer\"><hr/><div class=\"container\"><p class=\"text-muted\">See the source at <a href='http://github.com/gcolin/simple-repo'>GitHub</a></p></div></footer></body></html>");
-  }
-
-
-  protected void doMenu(HttpServletRequest req) {
-    String base = req.getContextPath();
-    if (base.equals("/")) {
-      base = "";
-    }
-    Map<String, String> menu = new LinkedHashMap<>();
-    menu.put(base + "/repository/", "All repositories");
-    menu.put(base + "/config/repository", "Repositories");
-    PluginContainer container =
-        (PluginContainer) getServletContext().getAttribute("pluginContainer");
-    if (!container.getPlugins().isEmpty()) {
-      menu.put(base + "/config/plugin", "Plugins");
-    }
-    menu.put(base + "/documentation", "Documentation");
-    req.setAttribute("menu", menu);
-  }
-
-  @SuppressWarnings("unchecked")
-  protected void writeMenu(HttpServletRequest req, Writer writer) throws IOException {
-    for (Entry<String, String> entry : ((Map<String, String>) req.getAttribute("menu"))
-        .entrySet()) {
-      writer.append("<p><a href=\"");
-      writer.append(entry.getKey());
-      writer.append("\">");
-      writer.append(entry.getValue());
-      writer.append("</a></p>");
-    }
-  }
-
-  @SuppressWarnings("unchecked")
-  private void init0() {
-    List<EventListener> pluginListeners =
-        (List<EventListener>) getServletContext().getAttribute("pluginListeners");
-    List<IndexListener> rlisteners = new ArrayList<IndexListener>();
-    for (EventListener event : pluginListeners) {
-      if (event instanceof IndexListener) {
-        rlisteners.add((IndexListener) event);
-      }
-    }
-    listeners = rlisteners.toArray(new IndexListener[rlisteners.size()]);
-  }
-
-  @Override
-  public void onPluginInstalled() {
-    init0();
-  }
-
-  @Override
-  public void onPluginRemoved() {
-    init0();
-  }
-
-  @Override
-  public void onPluginUpdated(String name) {}
+	@SuppressWarnings("unchecked")
+	protected void writeMenu(HttpServletRequest req, Writer writer) throws IOException {
+		writer.append("<nav class=\"nav\"><div class=\"container\"><a class=\"pagename current\" href=\"#\">Your Site Name</a>");
+		for (Entry<String, String> entry : ((Map<String, String>) req.getAttribute("menu")).entrySet()) {
+			writer.append("<a href=\"");
+			writer.append(entry.getKey());
+			writer.append("\">");
+			writer.append(entry.getValue());
+			writer.append("</a>");
+		}
+		writer.append("</div></nav>");
+	}
 
 }

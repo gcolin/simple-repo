@@ -1,8 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.gcolin.server.maven</groupId>
-	<version>1.0-SNAPSHOT</version>
+	<version>0.1</version>
 	<artifactId>simple-repo-parent</artifactId>
 	<name>${project.artifactId}</name>
 	<packaging>pom</packaging>
@@ -10,12 +11,7 @@
 	<url>https://github.com/gcolin/${project.artifactId}</url>
 	<description>A tiny Maven proxy and repository</description>
 	<modules>
-		<module>simple-repo-lib</module>
-		<module>maven-lib</module>
 		<module>simple-repo</module>
-		<module>search-plugin</module>
-		<module>bootstrap-theme-plugin</module>
-		<module>extract-plugin</module>
 	</modules>
 	<licenses>
 		<license>
@@ -37,6 +33,7 @@
 		<connection>scm:git:git://github.com/gcolin/${project.artifactId}.git</connection>
 		<developerConnection>scm:git:git@github.com:gcolin/${project.artifactId}.git</developerConnection>
 		<url>http://github.com/gcolin/${project.artifactId}</url>
+		<tag>simple-repo-parent-0.1</tag>
 	</scm>
 
 	<properties>
@@ -102,29 +99,9 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>extract-plugin</artifactId>
-			</dependency>
-			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>simple-repo-lib</artifactId>
-			</dependency>
-			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>maven-lib</artifactId>
-			</dependency>
-			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>search-plugin</artifactId>
-			</dependency>
-			<dependency>
-				<groupId>net.gcolin.server.maven</groupId>
-				<version>${project.version}</version>
-				<artifactId>bootstrap-theme-plugin</artifactId>
+				<groupId>org.jsoup</groupId>
+				<artifactId>jsoup</artifactId>
+				<version>1.12.1</version>
 			</dependency>
 			<dependency>
 				<groupId>commons-beanutils</groupId>
@@ -244,8 +221,8 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	
-		<profiles>
+
+	<profiles>
 		<profile>
 			<id>onroot</id>
 			<activation>

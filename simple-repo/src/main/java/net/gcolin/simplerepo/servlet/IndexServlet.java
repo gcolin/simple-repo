@@ -33,9 +33,6 @@ public class IndexServlet extends AbstractDisplayServlet {
   @Override
   protected void doContent(HttpServletRequest req, Writer writer)
       throws ServletException, IOException {
-    for (int i = 0; i < listeners.length; i++) {
-      listeners[i].onIndex(req, writer);
-    }
   }
   
   @Override

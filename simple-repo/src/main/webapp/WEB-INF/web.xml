@@ -14,44 +14,20 @@ http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
         <servlet-class>net.gcolin.simplerepo.servlet.IndexServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>resourcesServlet</servlet-name>
-        <servlet-class>net.gcolin.simplerepo.servlet.ResourcesServlet</servlet-class>
-    </servlet>
-    <servlet>
         <servlet-name>repoServlet</servlet-name>
         <servlet-class>net.gcolin.simplerepo.servlet.RepositoryServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>configPluginServlet</servlet-name>
-        <servlet-class>net.gcolin.simplerepo.servlet.PluginConfigServlet</servlet-class>
-    </servlet>
-    <servlet>
         <servlet-name>configRepoServlet</servlet-name>
         <servlet-class>net.gcolin.simplerepo.servlet.RepositoryConfigServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>docRepoServlet</servlet-name>
-        <servlet-class>net.gcolin.simplerepo.servlet.DocumentationServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>repoServlet</servlet-name>
         <url-pattern>/repository/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>resourcesServlet</servlet-name>
-        <url-pattern>/resources/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>configPluginServlet</servlet-name>
-        <url-pattern>/config/plugin</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
         <servlet-name>configRepoServlet</servlet-name>
         <url-pattern>/config/repository</url-pattern>
-    </servlet-mapping>
-     <servlet-mapping>
-        <servlet-name>docRepoServlet</servlet-name>
-        <url-pattern>/documentation</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>indexServlet</servlet-name>
