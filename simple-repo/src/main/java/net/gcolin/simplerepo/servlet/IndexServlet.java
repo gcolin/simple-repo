@@ -15,10 +15,12 @@
 package net.gcolin.simplerepo.servlet;
 
 import java.io.IOException;
-import java.io.Writer;
 
+import javax.servlet.GenericServlet;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * Display index.
@@ -26,18 +28,15 @@ import javax.servlet.http.HttpServletRequest;
  * @author Gaël COLIN
  * @since 1.0
  */
-public class IndexServlet extends AbstractDisplayServlet {
+public class IndexServlet extends GenericServlet {
 
   private static final long serialVersionUID = 2586253416946691092L;
 
   @Override
-  protected void doContent(HttpServletRequest req, Writer writer)
-      throws ServletException, IOException {
-  }
-  
-  @Override
-  protected String getTitle() {
-    return "Simple repo";
-  }
+	public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
+	  HttpServletResponse resp = (HttpServletResponse) res;
+	  resp.sendRedirect("repository");
+	  resp.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+	}
 
 }

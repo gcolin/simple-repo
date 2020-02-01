@@ -68,10 +68,6 @@ public class ConfigurationManager implements ConfigurationJmx {
 	 * The configuration modification lock.
 	 */
 	private ReentrantLock lock = new ReentrantLock();
-	/**
-	 * The absolute path of the current written file.
-	 */
-	private volatile String currentRetrieve;
 
 	private String contextName;
 
@@ -498,20 +494,6 @@ public class ConfigurationManager implements ConfigurationJmx {
 			return repo.getArtifactMaxAge();
 		}
 
-	}
-
-	/**
-	 * @return the currentRetrieve
-	 */
-	public String getCurrentRetrieve() {
-		return currentRetrieve;
-	}
-
-	/**
-	 * @param currentRetrieve the currentRetrieve to set
-	 */
-	public void setCurrentRetrieve(String currentRetrieve) {
-		this.currentRetrieve = currentRetrieve;
 	}
 
 	public String getCurrentAction() {

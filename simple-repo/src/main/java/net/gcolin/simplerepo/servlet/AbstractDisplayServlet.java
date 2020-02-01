@@ -40,12 +40,16 @@ public abstract class AbstractDisplayServlet extends HttpServlet {
 	protected abstract void doContent(HttpServletRequest req, Writer writer) throws ServletException, IOException;
 
 	@Override
-	protected final void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		resp.setCharacterEncoding("utf-8");
 		resp.setContentType("text/html");
 		Writer writer = resp.getWriter();
 		writer.append("<html><head><title>");
-		writer.append(getTitle());
+		if (req.getAttribute("title") == null) {
+			writer.append(getTitle());
+		} else {
+			writer.append((String) req.getAttribute("title"));
+		}
 		writer.append("</title>" + "<meta charset=\"UTF-8\"><meta name=\"viewport\" "
 				+ "content=\"width=device-width, initial-scale=1.0\">");
 		writer.append("<link href=\"");
@@ -56,7 +60,6 @@ public abstract class AbstractDisplayServlet extends HttpServlet {
 		}
 		writer.append("/entireframework.min.css\" rel=\"stylesheet\" type=\"text/css\">");
 
-		req.setAttribute("title", getTitle());
 		doMenu(req);
 
 		writer.append("</head><body>");
@@ -64,12 +67,14 @@ public abstract class AbstractDisplayServlet extends HttpServlet {
 		writeMenu(req, writer);
 
 		writer.append("<div class=\"container\">");
-		
-		if (req.getAttribute("notitle") == null) {
-			writer.append("<h1>");
+
+		writer.append("<h1>");
+		if (req.getAttribute("title") == null) {
 			writer.append(getTitle());
-			writer.append("</h1>");
+		} else {
+			writer.append((String) req.getAttribute("title"));
 		}
+		writer.append("</h1>");
 		doContent(req, writer);
 		writer.append("</div>");
 	}
@@ -81,13 +86,17 @@ public abstract class AbstractDisplayServlet extends HttpServlet {
 		}
 		Map<String, String> menu = new LinkedHashMap<>();
 		menu.put(base + "/repository/", "All repositories");
-		menu.put(base + "/config/repository", "Repositories");
+		menu.put(base + "/config/repository", "Settings");
 		req.setAttribute("menu", menu);
 	}
 
 	@SuppressWarnings("unchecked")
 	protected void writeMenu(HttpServletRequest req, Writer writer) throws IOException {
-		writer.append("<nav class=\"nav\"><div class=\"container\"><a class=\"pagename current\" href=\"#\">Your Site Name</a>");
+		writer.append(
+				"<nav class=\"nav\"><div class=\"container\"><a class=\"pagename current\" href=\"#\">");
+		String path = req.getServletContext().getContextPath();
+		writer.append(path.length() < 2 ? "simple-repo" : path);
+		writer.append("</a>");
 		for (Entry<String, String> entry : ((Map<String, String>) req.getAttribute("menu")).entrySet()) {
 			writer.append("<a href=\"");
 			writer.append(entry.getKey());
