@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>net.gcolin.server.maven</groupId>
-		<version>0.1</version>
+		<version>0.1-SNAPSHOT</version>
 		<artifactId>simple-repo-parent</artifactId>
 	</parent>
 	<artifactId>simple-repo</artifactId>
