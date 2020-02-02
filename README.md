@@ -24,12 +24,6 @@ A war archive is generated in the *simple-repo/target* folder. Rename it to *sim
 
 Deploy the generated **war** archive into a Java Container (Tested with Tomcat 6 and Tomcat 8/9).
 
-For generating the maven site in *target/site* directory.
-
-```bash
-    mvn site
-```
-
 ## Where are stored the files
 
 The files are stored in **~/.simplerepo**. For storing files in another directory, 
